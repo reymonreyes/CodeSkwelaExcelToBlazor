@@ -6,10 +6,12 @@
     <MudToolBar>
         <MudText Typo="Typo.h6">Providers</MudText>
         <MudSpacer></MudSpacer>
-        <MudIconButton Icon="@Icons.Material.Outlined.Add" />
+        <MudTooltip Text="Create">
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" />
+        </MudTooltip>
     </MudToolBar>
 </MudPaper>
-<MudSimpleTable Hover="true" Bordered="true">
+<MudSimpleTable Hover="true" Bordered="true" Dense="true">
     <thead>
         <tr><th>Name</th><th>Address</th><th>Phone</th><th>Email</th><th></th></tr>
     </thead>
@@ -21,9 +23,13 @@
                 <td>@provider.Address</td>
                 <td>@provider.Phone</td>
                 <td>@provider.Email</td>
-                <td>                    
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"></MudIconButton>
-                    <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small"></MudIconButton>
+                <td>
+                    <MudTooltip Text="Edit">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"></MudIconButton>
+                    </MudTooltip>
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small"></MudIconButton>
+                    </MudTooltip>
                 </td>
             </tr>
         }
