@@ -1,0 +1,43 @@
+﻿@page "/providers"
+
+@using SimpleServiceInvoice.Models
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Providers</MudText>
+        <MudSpacer></MudSpacer>
+        <MudIconButton Icon="@Icons.Material.Outlined.Add" />
+    </MudToolBar>
+</MudPaper>
+<MudSimpleTable Hover="true" Bordered="true">
+    <thead>
+        <tr><th>Name</th><th>Address</th><th>Phone</th><th>Email</th><th></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var provider in _providers)
+        {
+            <tr>
+                <td>@provider.Name</td>
+                <td>@provider.Address</td>
+                <td>@provider.Phone</td>
+                <td>@provider.Email</td>
+                <td>                    
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"></MudIconButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small"></MudIconButton>
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+
+@code {
+    private List<Provider> _providers = new List<Provider>
+    {
+        new Provider { Id = 1, Name = "Alpha", Address = "J.P. Laurel Avenue, Davao City, 8000, Philippines", Phone = "222-3333", Email = "alpha@mail.com" },
+        new Provider { Id = 2, Name = "Bravo", Address = "Taft Avenue, Metro Manila, 1004, Philippines", Phone = "333-4444", Email = "bravo@mail.com" },
+        new Provider { Id = 1, Name = "Charlie", Address = "PBCom Tower, V.A. Rufino Street, Makati, 1229, Philippines", Phone = "444-5555", Email = "charlie@charlie.com" },
+        new Provider { Id = 1, Name = "Delta", Address = "SM Southmall, Alabang-Zapote Road, Las Pinas City, 1740, Philippines", Phone = "555-6666", Email = "delta@yahoo.com" },
+        new Provider { Id = 1, Name = "Echo", Address = "The Medical City, Ortigas Avenue, Pasig City, 1605, Philippines", Phone = "666-7777", Email = "echo@gmail.com" },
+    };
+
+}
