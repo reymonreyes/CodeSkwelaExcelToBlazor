@@ -1,13 +1,14 @@
 ﻿@page "/providers"
-
+@using SimpleServiceInvoice.Data
 @using SimpleServiceInvoice.Models
+@inject IDialogService DialogService
 
 <MudPaper Class="my-2">
     <MudToolBar>
         <MudText Typo="Typo.h6">Providers</MudText>
         <MudSpacer></MudSpacer>
         <MudTooltip Text="Create">
-            <MudIconButton Icon="@Icons.Material.Outlined.Add" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" Href="providers/create"/>
         </MudTooltip>
     </MudToolBar>
 </MudPaper>
@@ -25,10 +26,10 @@
                 <td>@provider.Email</td>
                 <td>
                     <MudTooltip Text="Edit">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"></MudIconButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" Href="@($"providers/{provider.Id}/edit")"></MudIconButton>
                     </MudTooltip>
                     <MudTooltip Text="Delete">
-                        <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small"></MudIconButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(provider))"></MudIconButton>
                     </MudTooltip>
                 </td>
             </tr>
@@ -37,13 +38,35 @@
 </MudSimpleTable>
 
 @code {
-    private List<Provider> _providers = new List<Provider>
-    {
-        new Provider { Id = 1, Name = "Alpha", Address = "J.P. Laurel Avenue, Davao City, 8000, Philippines", Phone = "222-3333", Email = "alpha@mail.com" },
-        new Provider { Id = 2, Name = "Bravo", Address = "Taft Avenue, Metro Manila, 1004, Philippines", Phone = "333-4444", Email = "bravo@mail.com" },
-        new Provider { Id = 1, Name = "Charlie", Address = "PBCom Tower, V.A. Rufino Street, Makati, 1229, Philippines", Phone = "444-5555", Email = "charlie@charlie.com" },
-        new Provider { Id = 1, Name = "Delta", Address = "SM Southmall, Alabang-Zapote Road, Las Pinas City, 1740, Philippines", Phone = "555-6666", Email = "delta@yahoo.com" },
-        new Provider { Id = 1, Name = "Echo", Address = "The Medical City, Ortigas Avenue, Pasig City, 1605, Philippines", Phone = "666-7777", Email = "echo@gmail.com" },
-    };
+    private List<Provider> _providers = new List<Provider>();
 
+    protected override void OnInitialized()
+    {
+        GetProviders();
+    }
+
+    private async Task Delete(Provider provider)
+    {
+        var message = (MarkupString)$"This action is irreversible.<br/>Are you sure you want to delete this Provider?<br/><b>{provider.Name}</b>";
+        var deleteConfirmed = await DialogService.ShowMessageBox("Delete Provider", message, "Yes", "No");
+
+        if (deleteConfirmed.HasValue && deleteConfirmed.Value)
+        {
+            using(var context = new ApplicationDbContext())
+            {
+                context.Remove(provider);
+                context.SaveChanges();
+            }
+
+            GetProviders();
+        }
+    }
+
+    private void GetProviders()
+    {
+        using (var context = new ApplicationDbContext())
+        {
+            _providers = context.Providers.ToList();
+        }
+    }
 }

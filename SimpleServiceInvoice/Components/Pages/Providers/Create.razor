@@ -1,0 +1,50 @@
+﻿@page "/providers/create"
+@using System.ComponentModel.DataAnnotations
+@using SimpleServiceInvoice.Data
+@inject NavigationManager NavigationManager
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Create Provider</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Save">
+            <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save"/>
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
+
+<MudPaper Class="pa-3">
+    <MudForm @ref="_mudForm">
+        <MudTextField @bind-Value="_provider.Name" Label="Name" Required="true"></MudTextField>
+        <MudTextField @bind-Value="_provider.Address" Label="Address" Required="true"></MudTextField>
+        <MudTextField @bind-Value="_provider.Phone" Label="Phone" Required="true"></MudTextField>
+        <MudTextField @bind-Value="_provider.Email" Label="Email" Required="true" Validation="@(new EmailAddressAttribute() { ErrorMessage = "The email address is invalid" })"></MudTextField>
+    </MudForm>
+</MudPaper>
+
+@code {
+    MudForm _mudForm;
+    Models.Provider _provider;
+
+    protected override void OnInitialized()
+    {
+        _provider = new Models.Provider();
+    }
+
+    private void Save()
+    {
+        _mudForm.Validate();
+
+        if (!_mudForm.IsValid)
+            return;
+
+
+        using(var context = new ApplicationDbContext())
+        {
+            context.Providers.Add(_provider);
+            var result = context.SaveChanges();
+        }
+
+        NavigationManager.NavigateTo("providers");
+    }
+}
