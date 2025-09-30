@@ -1,0 +1,51 @@
+﻿@page "/customers/create"
+@using System.ComponentModel.DataAnnotations
+@using SimpleServiceInvoice.Data
+@inject NavigationManager NavigationManager
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Create Customer</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Save">
+            <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" />
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
+
+<MudPaper Class="pa-3">
+    <MudForm @ref="_mudForm">
+        <MudTextField @bind-Value="_customer.Name" Label="Name" Required="true"></MudTextField>
+        <MudTextField @bind-Value="_customer.Address" Label="Address" Required="true"></MudTextField>
+        <MudTextField @bind-Value="_customer.Phone" Label="Phone" Required="true"></MudTextField>
+        <MudTextField @bind-Value="_customer.Email" Label="Email" Required="true" Validation="@(new EmailAddressAttribute() { ErrorMessage = "The email address is invalid" })"></MudTextField>
+        <MudTextField @bind-Value="_customer.ContactName" Label="Contact Name" Required="true"></MudTextField>
+    </MudForm>
+</MudPaper>
+
+@code {
+    MudForm _mudForm;
+    Models.Customer _customer;
+
+    protected override void OnInitialized()
+    {
+        _customer = new Models.Customer();
+    }
+
+    private void Save()
+    {
+        _mudForm.Validate();
+
+        if (!_mudForm.IsValid)
+            return;
+
+
+        using (var context = new ApplicationDbContext())
+        {
+            context.Customers.Add(_customer);
+            var result = context.SaveChanges();
+        }
+
+        NavigationManager.NavigateTo("customers");
+    }
+}
