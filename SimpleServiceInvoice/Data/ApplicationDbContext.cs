@@ -8,6 +8,7 @@ namespace SimpleServiceInvoice.Data
         private string DbPath;
         public DbSet<Provider> Providers { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<ProviderService> ProviderServices { get; set; }
 
         public ApplicationDbContext()
         {
