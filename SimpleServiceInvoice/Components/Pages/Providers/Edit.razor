@@ -1,10 +1,14 @@
 ﻿@page "/providers/{id:int}/edit"
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
 @using SimpleServiceInvoice.Data
 @inject NavigationManager NavigationManager
 
 <MudPaper Class="my-2">
     <MudToolBar>
+        <MudTooltip Text="Back">
+            <MudIconButton Icon="@Icons.Material.Outlined.ArrowBack" Href="/providers" />
+        </MudTooltip>
         <MudText Typo="Typo.h6">Edit Provider</MudText>
         <MudSpacer></MudSpacer>
         <MudTooltip Text="Save">
@@ -21,10 +25,28 @@
         <MudTextField @bind-Value="_provider.Email" Label="Email" Required="true" Validation="@(new EmailAddressAttribute() { ErrorMessage = "The email address is invalid" })"></MudTextField>
     </MudForm>
 </MudPaper>
+<MudPaper Class="pa-3 my-3">
+    <MudText>Services</MudText>
+    <MudPaper Elevation="0" Class="my-1">
+        <MudStack Row="true">
+            <MudTextField @bind-Value="_serviceToAdd" ShrinkLabel></MudTextField>
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" Variant="Variant.Outlined" OnClick="AddService" />
+        </MudStack>
+    </MudPaper>
+    <MudDivider />
+    @foreach (var item in _provider.Services)
+    {
+        <MudStack Row="true">
+            <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small"></MudIconButton>
+            <MudTextField @bind-Value="item.Description" Required="true" Margin="Margin.Dense"></MudTextField>
+        </MudStack>
+    }
+</MudPaper>
 
 @code {
     MudForm _mudForm;
     Models.Provider _provider = null;
+    string _serviceToAdd;
 
     [Parameter]
     public int Id { get; set; }
@@ -38,7 +60,7 @@
     {
         using (var context = new ApplicationDbContext())
         {
-            _provider = context.Providers.Single(x => x.Id == Id);
+            _provider = context.Providers.Include(x => x.Services).Single(x => x.Id == Id);
         }        
     }
 
@@ -57,6 +79,15 @@
         }
 
         NavigationManager.NavigateTo("providers");
+    }
+
+    private void AddService()
+    {
+        if (string.IsNullOrWhiteSpace(_serviceToAdd))
+            return;
+
+        _provider.Services.Add(new Models.ProviderService { Description = _serviceToAdd });
+        _serviceToAdd = string.Empty;
     }
 }
 

@@ -18,13 +18,31 @@
         <MudTextField @bind-Value="_provider.Name" Label="Name" Required="true"></MudTextField>
         <MudTextField @bind-Value="_provider.Address" Label="Address" Required="true"></MudTextField>
         <MudTextField @bind-Value="_provider.Phone" Label="Phone" Required="true"></MudTextField>
-        <MudTextField @bind-Value="_provider.Email" Label="Email" Required="true" Validation="@(new EmailAddressAttribute() { ErrorMessage = "The email address is invalid" })"></MudTextField>
+        <MudTextField @bind-Value="_provider.Email" Label="Email" Required="true" Validation="@(new EmailAddressAttribute() { ErrorMessage = "The email address is invalid" })"></MudTextField>        
     </MudForm>
+</MudPaper>
+<MudPaper Class="pa-3 my-3">
+    <MudText>Services</MudText>
+    <MudPaper Elevation="0" Class="my-1">
+        <MudStack Row="true">
+            <MudTextField @bind-Value="_serviceToAdd" ShrinkLabel></MudTextField>
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" Variant="Variant.Outlined" OnClick="AddService"/>
+        </MudStack>
+    </MudPaper>
+    <MudDivider/>
+    @foreach (var item in _provider.Services)
+    {       
+        <MudStack Row="true">
+            <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small"></MudIconButton>                
+            <MudTextField @bind-Value="item.Description" Required="true" Margin="Margin.Dense"></MudTextField>
+        </MudStack>
+    }
 </MudPaper>
 
 @code {
     MudForm _mudForm;
     Models.Provider _provider;
+    string _serviceToAdd;
 
     protected override void OnInitialized()
     {
@@ -46,5 +64,14 @@
         }
 
         NavigationManager.NavigateTo("providers");
+    }
+
+    private void AddService()
+    {
+        if (string.IsNullOrWhiteSpace(_serviceToAdd))
+            return;
+
+        _provider.Services.Add(new Models.ProviderService { Description = _serviceToAdd });
+        _serviceToAdd = string.Empty;
     }
 }
