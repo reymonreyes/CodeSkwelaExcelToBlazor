@@ -15,5 +15,6 @@
         public int Id { get; set; }
         public int ProviderId { get; set; }
         public string Description { get; set; }
+        public decimal UnitPrice { get; set; }
     }
 }
