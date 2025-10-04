@@ -1,4 +1,14 @@
-﻿<h3>Index</h3>
+﻿@page "/invoices"
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Invoices</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Create">
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" Href="invoices/create" />
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
 
 @code {
 

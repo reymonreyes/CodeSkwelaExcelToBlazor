@@ -1,0 +1,137 @@
+﻿@page "/invoices/create"
+@using SimpleServiceInvoice.Data
+@using SimpleServiceInvoice.Models
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Invoice</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Save">
+            <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" />
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
+<MudPaper Class="pa-2 mt-2">
+    <MudGrid>
+        <MudItem xs="12" sm="12" md="6" lg="6">
+            <MudSelect T="Provider" Label="Provider" Placeholder="Select..." Required="true" ValueChanged="GetServices">
+                @foreach (var provider in _providers)
+                {
+                    <MudSelectItem Value="@provider">@provider.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="6" lg="6">
+            <MudSelect @bind-Value="_selectedCustomer" Label="Customer" Placeholder="Select..." Required="true">
+                @foreach (var customer in _customers)
+                {
+                    <MudSelectItem Value="@customer">@customer.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="3" lg="3">
+            <MudText>
+                <MudTextField T="string" Label="Invoice #" Required="true"></MudTextField>
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="3" lg="3">
+            <MudText>
+                <MudDatePicker Label="Date" Editable="true" @bind-Date="_date" Placeholder="Select Date" />
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="6" lg="6">
+            <MudText>
+                <MudTextField T="string" Label="Terms"></MudTextField>
+            </MudText>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+<MudPaper Class="my-2">
+    <MudSimpleTable Bordered="true">
+        <thead>
+            <tr>
+                <th>DESCRIPTION</th>
+                <th>QTY</th>
+                <th>UNIT PRICE</th>
+                <th>AMOUNT</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>asfas</td><td>fdasfd</td><td>adfdfdsa</td><td>kfjlksadfsa</td></tr>
+            <tr><td>asfas</td><td>fdasfd</td><td>adfdfdsa</td><td>kfjlksadfsa</td></tr>
+            <tr><td>asfas</td><td>fdasfd</td><td>adfdfdsa</td><td>kfjlksadfsa</td></tr>
+            <tr><td>asfas</td><td>fdasfd</td><td>adfdfdsa</td><td>kfjlksadfsa</td></tr>
+            <tr><td>asfas</td><td>fdasfd</td><td>adfdfdsa</td><td>kfjlksadfsa</td></tr>
+            <tr>
+                <td>
+                    <MudSelect @bind-Value="_selectedService" Placeholder="Select..." Required="true">
+                        @foreach (var service in _services)
+                        {
+                            <MudSelectItem Value="@service">@service.Description</MudSelectItem>
+                        }
+                    </MudSelect>
+                </td>
+                <td>
+                    <MudNumericField @bind-Value="_qty"></MudNumericField>                    
+                </td>
+                <td>
+                    <MudNumericField @bind-Value="_unitPrice"></MudNumericField>
+                </td>
+                <td>
+                    <MudText>@(_qty * _unitPrice)</MudText>
+                </td>
+            </tr>
+        </tbody>
+    </MudSimpleTable>
+</MudPaper>
+
+@code {
+    DateTime? _date = DateTime.Now;
+    List<Provider> _providers = new List<Provider>();
+    List<Customer> _customers = new List<Customer>();
+    List<ProviderService> _services = new List<ProviderService>();
+    Provider? _selectedProvider;
+    Customer? _selectedCustomer;
+    ProviderService? _selectedService;
+    int _qty;
+    decimal _unitPrice;
+
+    protected override void OnInitialized()
+    {
+        GetProviders();
+        GetCustomers();
+    }
+
+    private void GetProviders()
+    {
+        using(var context = new ApplicationDbContext())
+        {
+            _providers = context.Providers.ToList();
+        }
+    }
+
+    private void GetCustomers()
+    {
+        using(var context = new ApplicationDbContext())
+        {
+            _customers = context.Customers.ToList();
+        }
+    }
+
+    private void GetServices(Provider provider)
+    {
+        if(provider != null)
+        {
+            _selectedProvider = provider;
+            using(var context = new ApplicationDbContext())
+            {
+                _services = context.ProviderServices.Where(x => x.ProviderId == _selectedProvider.Id).ToList();
+            }
+        }
+    }
+
+    private void Save()
+    {
+        
+    }
+}
