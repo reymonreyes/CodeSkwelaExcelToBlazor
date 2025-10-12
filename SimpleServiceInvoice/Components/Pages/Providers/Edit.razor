@@ -29,24 +29,49 @@
     <MudText>Services</MudText>
     <MudPaper Elevation="0" Class="my-1">
         <MudStack Row="true">
-            <MudTextField @bind-Value="_serviceToAdd" ShrinkLabel></MudTextField>
+            <MudTextField @bind-Value="_serviceToAdd" Label="Description" ShrinkLabel></MudTextField>
+            <MudNumericField @bind-Value="_serviceUnitPriceToAdd" Label="Unit Price" Required="true"></MudNumericField>
             <MudIconButton Icon="@Icons.Material.Outlined.Add" Variant="Variant.Outlined" OnClick="AddService" />
         </MudStack>
     </MudPaper>
     <MudDivider />
-    @foreach (var item in _provider.Services)
+    <MudSimpleTable Dense="true">
+        <thead>
+            <tr><th></th><th>Description</th><th>Unit Price</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var item in _provider.Services)
+            {
+                <tr>
+                    <td style="width: 1%;padding-left: 5px;padding-right: 5px;">
+                        <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveService(item))"></MudIconButton>
+                    </td>
+                    <td style="width: 80%;">
+                        <MudTextField @bind-Value="item.Description" Required="true" Margin="Margin.Dense"></MudTextField>
+                    </td>
+                    <td>
+                        <MudNumericField @bind-Value=item.UnitPrice Required="true" Margin="Margin.Dense"></MudNumericField>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+    @* @foreach (var item in _provider.Services)
     {
         <MudStack Row="true">
             <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small"></MudIconButton>
             <MudTextField @bind-Value="item.Description" Required="true" Margin="Margin.Dense"></MudTextField>
+            <MudNumericField @bind-Value=item.UnitPrice Required="true" Margin="Margin.Dense"></MudNumericField>
         </MudStack>
-    }
+    } *@
 </MudPaper>
 
 @code {
     MudForm _mudForm;
     Models.Provider _provider = null;
     string _serviceToAdd;
+    decimal _serviceUnitPriceToAdd;
+    List<Models.ProviderService> _removedServices = new List<Models.ProviderService>();
 
     [Parameter]
     public int Id { get; set; }
@@ -74,6 +99,11 @@
 
         using (var context = new ApplicationDbContext())
         {
+            foreach (var service in _removedServices)
+            {
+                context.Entry(service).State = EntityState.Deleted;
+            }
+
             context.Update(_provider);
             var result = context.SaveChanges();
         }
@@ -86,8 +116,17 @@
         if (string.IsNullOrWhiteSpace(_serviceToAdd))
             return;
 
-        _provider.Services.Add(new Models.ProviderService { Description = _serviceToAdd });
+        _provider.Services.Add(new Models.ProviderService { Description = _serviceToAdd, UnitPrice = _serviceUnitPriceToAdd });
         _serviceToAdd = string.Empty;
+        _serviceUnitPriceToAdd = 0;
+    }
+
+    private void RemoveService(Models.ProviderService service)
+    {
+        if (service.Id > 0)
+            _removedServices.Add(service);
+
+        _provider.Services.Remove(service);
     }
 }
 

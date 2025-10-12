@@ -1,4 +1,6 @@
-﻿namespace SimpleServiceInvoice.Models
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace SimpleServiceInvoice.Models
 {
     public class Provider
     {
@@ -16,5 +18,20 @@
         public int ProviderId { get; set; }
         public string Description { get; set; }
         public decimal UnitPrice { get; set; }
+    }
+
+    public class ProviderComparer : IEqualityComparer<Provider>
+    {
+        public bool Equals(Provider? x, Provider? y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (ReferenceEquals(x, null) || ReferenceEquals(y, null)) return false;
+            return x.Id == y.Id;
+        }
+
+        public int GetHashCode([DisallowNull] Provider obj)
+        {
+            return obj.Id.GetHashCode();
+        }
     }
 }
