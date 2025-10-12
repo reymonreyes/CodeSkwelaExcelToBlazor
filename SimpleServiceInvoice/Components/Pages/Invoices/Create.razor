@@ -5,8 +5,11 @@
 @using SimpleServiceInvoice.Models
 
 <MudPaper Class="my-2">
-    <MudToolBar>
-        <MudText Typo="Typo.h6">Invoice</MudText>
+    <MudToolBar Class="px-2">
+        <MudTooltip Text="Back">
+            <MudIconButton Icon="@Icons.Material.Outlined.ArrowBack" Href="invoices" />
+        </MudTooltip>
+        <MudText Typo="Typo.h6" Class="ml-2">Invoice</MudText>
         <MudSpacer></MudSpacer>
         <MudTooltip Text="Save">
             <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" />
@@ -93,7 +96,6 @@
                         </MudItem>
                         <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
                             <MudField Class="no-underline text-right">@item.Total.ToString("N2")</MudField>
-                            @* <MudTextField Value="@item.Total.ToString("N2")" Disabled="true" Class="no-underline text-right" /> *@
                         </MudItem>
                     </MudGrid>
                 </MudForm>

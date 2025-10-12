@@ -1,4 +1,7 @@
 ﻿@page "/invoices"
+@using Microsoft.EntityFrameworkCore
+@using SimpleServiceInvoice.Data
+@using SimpleServiceInvoice.Models
 
 <MudPaper Class="my-2">
     <MudToolBar>
@@ -9,7 +12,36 @@
         </MudTooltip>
     </MudToolBar>
 </MudPaper>
+<MudSimpleTable Hover="true" Bordered="true" Dense="true">
+    <thead>
+        <tr><th>Provider Name</th><th>Customer Name</th><th>Invoice #</th><th>Invoice Date</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var _invoice in _invoices)
+        {
+            <tr>
+                <td>@_invoice.Provider.Name</td>
+                <td>@_invoice.Customer.Name</td>
+                <td>@_invoice.InvoiceNumber</td>
+                <td>@_invoice.Date.ToShortDateString()</td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
 
 @code {
+    List<Invoice> _invoices = new List<Invoice>();
 
+    protected override void OnInitialized()
+    {
+        GetInvoices();
+    }
+
+    private void GetInvoices()
+    {
+        using(var context = new ApplicationDbContext())
+        {
+            _invoices = context.Invoices.Include(x => x.Provider).Include(x => x.Customer).ToList();
+        }
+    }
 }

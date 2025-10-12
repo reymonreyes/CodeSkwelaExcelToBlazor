@@ -4,11 +4,13 @@
     {
         public int Id { get; set; }
         public int ProviderId { get; set; }
+        public Provider Provider { get; set; }
         public int CustomerId { get; set; }
+        public Customer Customer { get; set; }
         public DateTime Date { get; set; }
-        public string Terms { get; set; }
+        public string? Terms { get; set; }
         public decimal TaxRate { get; set; }
-        public string InvoiceNumber { get; set; }
+        public string? InvoiceNumber { get; set; }
         public ICollection<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
     }
 
