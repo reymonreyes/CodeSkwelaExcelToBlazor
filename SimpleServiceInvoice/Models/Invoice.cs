@@ -8,6 +8,7 @@
         public DateTime Date { get; set; }
         public string Terms { get; set; }
         public decimal TaxRate { get; set; }
+        public string InvoiceNumber { get; set; }
         public ICollection<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
     }
 

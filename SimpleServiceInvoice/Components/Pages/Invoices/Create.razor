@@ -1,5 +1,6 @@
 ﻿@page "/invoices/create"
 @using FluentValidation
+@using Microsoft.EntityFrameworkCore
 @using SimpleServiceInvoice.Data
 @using SimpleServiceInvoice.Models
 
@@ -21,13 +22,7 @@
                     {
                         <MudSelectItem Value="@provider">@provider.Name</MudSelectItem>
                     }
-                </MudSelect>
-                @* <MudSelect @bind-Value="_invoiceFormModel.Provider" For="@(() => _invoiceFormModel.Provider)" Label="Provider" Placeholder="Select..." Clearable="true" Required="true">
-                    @foreach (Provider provider in _providers)
-                    {
-                        <MudSelectItem Value="@provider">@provider.Name</MudSelectItem>
-                    }
-                </MudSelect> *@
+                </MudSelect>                
             </MudItem>
             <MudItem xs="12" sm="12" md="6" lg="6">
                 <MudSelect @bind-Value="_invoiceFormModel.Customer" For="@(() => _invoiceFormModel.Customer)" Label="Customer" Placeholder="Select..." Clearable="true" Required="true">
@@ -41,15 +36,24 @@
                 <MudTextField @bind-Value="_invoiceFormModel.InvoiceNumber" Label="Invoice #" Required="true"></MudTextField>
             </MudItem>
             <MudItem xs="12" sm="12" md="3" lg="3">
-                <MudDatePicker Label="Date" Editable="true" @bind-Date="_invoiceFormModel.InvoiceDate" Placeholder="Select Date" Required="true"/>
+                <MudDatePicker Label="Date" Editable="true" For="@(() => _invoiceFormModel.InvoiceDate)" @bind-Date="_invoiceFormModel.InvoiceDate" Placeholder="Select Date" Required="true"/>
             </MudItem>
             <MudItem xs="12" sm="12" md="6" lg="6">
-                    <MudTextField @bind-Value="_invoiceFormModel.Terms" Label="Terms"></MudTextField>
+                    <MudTextField @bind-Value="_invoiceFormModel.Terms" For="@(() => _invoiceFormModel.Terms)" Label="Terms"></MudTextField>
             </MudItem>
         </MudGrid>
     </MudForm>
 </MudPaper>
 <MudPaper Class="my-2 pa-2">
+    <MudToolBar>
+        <MudSelect Placeholder="Select..." @bind-Value="_selectedService">
+            @foreach (var service in _services)
+            {
+                <MudSelectItem Value="@service">@service.Description</MudSelectItem>
+            }
+        </MudSelect>        
+        <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="AddNewItem"/>
+    </MudToolBar>
     <MudGrid Spacing="0" Class="border border-solid rounded" Style="@($"border-color: {Colors.Gray.Lighten3};")">
         <MudItem md="1" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
         </MudItem>
@@ -71,7 +75,7 @@
                 <MudForm Model="item">
                     <MudGrid Spacing="0">
                         <MudItem md="1" Class="border-b border-r border-solid pa-2 mud-select" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                            <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined"></MudIconButton>                            
+                            <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => { _invoiceFormModel.Items.Remove(item); })"></MudIconButton>
                         </MudItem>
                         <MudItem md="5" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
                             <MudSelect T="ProviderService" Value="item.Service" For="@(() => item.Service)" Placeholder="Select..." Required="true" ValueChanged="@((val) => SetServiceItem(val, item))" Class="no-underline">
@@ -88,35 +92,12 @@
                             <MudNumericField @bind-Value="@item.UnitPrice" Class="no-underline text-right"></MudNumericField>                            
                         </MudItem>
                         <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                            <MudTextField Value="@item.Total.ToString("N2")" Disabled="true" Class="no-underline text-right normal-text-on-disabled" />
+                            <MudField Class="no-underline text-right">@item.Total.ToString("N2")</MudField>
+                            @* <MudTextField Value="@item.Total.ToString("N2")" Disabled="true" Class="no-underline text-right" /> *@
                         </MudItem>
                     </MudGrid>
                 </MudForm>
-            }
-            <MudForm>
-                <MudGrid Spacing="0">
-                    <MudItem md="1" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                    </MudItem>
-                    <MudItem md="5" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                        <MudSelect @ref="_selectService" T="ProviderService" Placeholder="Select..." Class="no-underline" ValueChanged="AddNewItem">
-                        @* <MudSelect @ref="_selectService" T="ProviderService" Placeholder="Select..." Class="no-underline" OnKeyUp="KeyUpEvent" OnKeyDown="KeyDownEvent" ValueChanged="ValueChangedEvent" OnClose="SelectCloseEvent" TextChanged="TextChangedEvent"> *@
-                            @foreach (var service in _services)
-                            {
-                                <MudSelectItem Value="@service">@service.Description</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                        <MudTextField T="string" Value="@string.Empty" Disabled="true" Class="no-underline" />
-                    </MudItem>
-                    <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                        <MudTextField T="string" Value="@string.Empty" Disabled="true" Class="no-underline" />
-                    </MudItem>
-                    <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                        <MudTextField T="string" Value="@string.Empty" Disabled="true" Class="no-underline" />                        
-                    </MudItem>
-                </MudGrid>
-            </MudForm>
+            }            
         </MudItem>
     </MudGrid>
 </MudPaper>
@@ -125,7 +106,8 @@
     border-bottom: none;
 }
 
-.text-right .mud-input input.mud-input-slot {
+.text-right .mud-input input.mud-input-slot,
+.text-right .mud-input .mud-input-slot{
     text-align: right;
 }
 
@@ -139,23 +121,21 @@
     List<Provider> _providers = new List<Provider>();
     List<Customer> _customers = new List<Customer>();
     List<ProviderService> _services = new List<ProviderService>();
-    ProviderService? _selectedService;
-    int _qty;
-    decimal _unitPrice;
+    ProviderService? _selectedService;    
     MudForm _invoiceForm;
-    MudSelect<ProviderService> _selectService;
     InvoiceViewModel _invoiceFormModel = new InvoiceViewModel();
-    InvoiceItemViewModel _newInvoiceItem = new InvoiceItemViewModel();    
 
     protected override void OnInitialized()
     {
         GetProviders();
         GetCustomers();
+        InitializeModel();
     }
 
     private void InitializeModel()
     {
         _invoiceFormModel.InvoiceDate = DateTime.Now;
+        _invoiceFormModel.InvoiceNumber = GetNextInvoiceNumber().ToString();
     }
 
     private void GetProviders()
@@ -187,12 +167,20 @@
         {
             _services = context.ProviderServices.Where(x => x.ProviderId == _invoiceFormModel.Provider.Id).ToList();
         }
-
+        _invoiceFormModel.Items = new List<InvoiceItemViewModel>();
     }
 
-    private bool ValidateProviderField(Provider provider)
+    private int GetNextInvoiceNumber()
     {
-        return false;
+        int nextId = 0;
+        using (var context = new ApplicationDbContext())
+        {
+            var seqQuery = context.Database.SqlQuery<int>($"SELECT seq FROM sqlite_sequence WHERE name = 'Invoices'").ToList();
+            if (seqQuery != null && seqQuery.Any())
+                nextId = seqQuery.FirstOrDefault();
+        }
+
+        return nextId + 1;
     }
 
     private void SetServiceItem(ProviderService service, InvoiceItemViewModel model)
@@ -202,58 +190,40 @@
         model.UnitPrice = service.UnitPrice;
     }
 
-    private void AddNewItem(ProviderService service)
+    private void AddNewItem()
     {
-        if (service is null)
+        if (_selectedService == null)
             return;
+
         var newItem = new InvoiceItemViewModel();
-        newItem.Service = service;
+        newItem.Service = _selectedService;
         newItem.Quantity = 1;
-        newItem.UnitPrice = service.UnitPrice;
+        newItem.UnitPrice = _selectedService.UnitPrice;
         _invoiceFormModel.Items.Add(newItem);
-        _selectService.Clear();
-    }
-
-    bool _isEnterKeyPressed = false;
-    int lineCtr = 0;
-
-    //after clicking item OnClose -> ValueChanged
-    //after enter key ValueChanged -> OnClose
-
-
-    private void ValueChangedEvent(ProviderService providerService)
-    {
-        lineCtr++;
-        Console.WriteLine($"[{lineCtr}] Select ValueChanged");
-    }
-
-    private void TextChangedEvent(string value)
-    {
-        lineCtr++;
-        Console.WriteLine($"[{lineCtr}] Select TextChanged");
-    }
-
-    private void KeyUpEvent(KeyboardEventArgs eventArgs)
-    {
-        lineCtr++;
-        Console.WriteLine($"[{lineCtr}] Select OnKeyUp");
-    }
-
-    private void KeyDownEvent(KeyboardEventArgs eventArgs)
-    {
-        lineCtr++;
-        Console.WriteLine($"[{lineCtr}] Select OnKeyDown");
-    }
-
-    private void SelectCloseEvent()
-    {
-        lineCtr++;
-        Console.WriteLine($"[{lineCtr}] Select OnClose");
-    }
+        _selectedService = null;
+    }    
 
     private async Task Save()
     {
         await _invoiceForm.Validate();
+
+        if (!_invoiceForm.IsValid)
+            return;
+
+        var invoice = new Invoice();
+        invoice.ProviderId = _invoiceFormModel.Provider.Id;
+        invoice.CustomerId = _invoiceFormModel.Customer.Id;
+        invoice.Date = _invoiceFormModel.InvoiceDate.Value;
+        invoice.Terms = _invoiceFormModel.Terms;
+        invoice.InvoiceNumber = _invoiceFormModel.InvoiceNumber;
+        invoice.Items = _invoiceFormModel.Items.Select(x => new InvoiceItem { ProviderServiceId = x.Service.ProviderId, Quantity = x.Quantity, UnitPrice = x.UnitPrice }).ToList();
+
+        using (var context = new ApplicationDbContext())
+        {
+            context.Invoices.Add(invoice);
+
+            var result = context.SaveChanges();
+        }
     }    
 
     public class InvoiceViewModel
