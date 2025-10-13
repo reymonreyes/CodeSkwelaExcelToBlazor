@@ -8,7 +8,7 @@
         <MudText Typo="Typo.h6">Invoices</MudText>
         <MudSpacer></MudSpacer>
         <MudTooltip Text="Create">
-            <MudIconButton Icon="@Icons.Material.Outlined.Add" Href="invoices/create" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" Href="invoices/0" />
         </MudTooltip>
     </MudToolBar>
 </MudPaper>
@@ -20,7 +20,7 @@
         @foreach (var _invoice in _invoices)
         {
             <tr>
-                <td>@_invoice.Provider.Name</td>
+                <td><MudLink Href="@($"invoices/{_invoice.Id}")">@_invoice.Provider.Name</MudLink></td>
                 <td>@_invoice.Customer.Name</td>
                 <td>@_invoice.InvoiceNumber</td>
                 <td>@_invoice.Date.ToShortDateString()</td>

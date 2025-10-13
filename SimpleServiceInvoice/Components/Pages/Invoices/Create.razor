@@ -1,15 +1,18 @@
-﻿@page "/invoices/create"
+﻿@page "/invoices/{id:int}"
 @using FluentValidation
+@using System.Linq
 @using Microsoft.EntityFrameworkCore
 @using SimpleServiceInvoice.Data
 @using SimpleServiceInvoice.Models
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 
 <MudPaper Class="my-2">
     <MudToolBar Class="px-2">
         <MudTooltip Text="Back">
             <MudIconButton Icon="@Icons.Material.Outlined.ArrowBack" Href="invoices" />
         </MudTooltip>
-        <MudText Typo="Typo.h6" Class="ml-2">Invoice</MudText>
+        <MudText Typo="Typo.h6" Class="ml-2">@GetTitle()</MudText>
         <MudSpacer></MudSpacer>
         <MudTooltip Text="Save">
             <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" />
@@ -20,7 +23,7 @@
     <MudForm @ref="@_invoiceForm" Model="@_invoiceFormModel">
         <MudGrid>
             <MudItem xs="12" sm="12" md="6" lg="6">
-                <MudSelect T="Provider" For="@(() => _invoiceFormModel.Provider)" ValueChanged="GetServices" Label="Provider" Placeholder="Select..." Clearable="true" Required="true">
+                <MudSelect Value="@_invoiceFormModel.Provider" T="Provider" ToStringFunc="@(x => x?.Name)" For="@(() => _invoiceFormModel.Provider)" ValueChanged="GetServices" Label="Provider" Placeholder="Select..." Clearable="true" Required="true">
                     @foreach (Provider provider in _providers)
                     {
                         <MudSelectItem Value="@provider">@provider.Name</MudSelectItem>
@@ -28,7 +31,7 @@
                 </MudSelect>                
             </MudItem>
             <MudItem xs="12" sm="12" md="6" lg="6">
-                <MudSelect @bind-Value="_invoiceFormModel.Customer" For="@(() => _invoiceFormModel.Customer)" Label="Customer" Placeholder="Select..." Clearable="true" Required="true">
+                <MudSelect @bind-Value="_invoiceFormModel.Customer" ToStringFunc="@(x => x?.Name)" For="@(() => _invoiceFormModel.Customer)" Label="Customer" Placeholder="Select..." Clearable="true" Required="true">
                     @foreach (var customer in _customers)
                     {
                         <MudSelectItem Value="@customer">@customer.Name</MudSelectItem>
@@ -78,10 +81,10 @@
                 <MudForm Model="item">
                     <MudGrid Spacing="0">
                         <MudItem md="1" Class="border-b border-r border-solid pa-2 mud-select" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                            <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => { _invoiceFormModel.Items.Remove(item); })"></MudIconButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RemoveItem(item))"></MudIconButton>
                         </MudItem>
                         <MudItem md="5" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
-                            <MudSelect T="ProviderService" Value="item.Service" For="@(() => item.Service)" Placeholder="Select..." Required="true" ValueChanged="@((val) => SetServiceItem(val, item))" Class="no-underline">
+                            <MudSelect T="ProviderService" Value="item.Service" ToStringFunc="@(x => x?.Description)" For="@(() => item.Service)" Placeholder="Select..." Required="true" ValueChanged="@((val) => SetServiceItem(val, item))" Class="no-underline">
                                 @foreach (var service in _services)
                                 {
                                     <MudSelectItem Value="@service">@service.Description</MudSelectItem>
@@ -126,18 +129,58 @@
     ProviderService? _selectedService;    
     MudForm _invoiceForm;
     InvoiceViewModel _invoiceFormModel = new InvoiceViewModel();
+    ViewMode _viewMode = ViewMode.Create;
+
+    [Parameter]
+    public int Id { get; set; }
 
     protected override void OnInitialized()
     {
+        if (Id > 0)
+            _viewMode = ViewMode.Update;
+
         GetProviders();
         GetCustomers();
         InitializeModel();
+
+        GetInvoice();
     }
 
     private void InitializeModel()
     {
-        _invoiceFormModel.InvoiceDate = DateTime.Now;
-        _invoiceFormModel.InvoiceNumber = GetNextInvoiceNumber().ToString();
+        switch (_viewMode)
+        {
+            case ViewMode.Create:
+                _invoiceFormModel.InvoiceDate = DateTime.Now;
+                _invoiceFormModel.InvoiceNumber = GetNextInvoiceNumber().ToString();
+                break;
+            case ViewMode.Update:
+                GetInvoice();
+                break;
+        }
+
+    }
+
+    private void GetInvoice()
+    {
+        Invoice invoice = null;
+
+        using(var context = new ApplicationDbContext())
+        {
+            invoice = context.Invoices.Include(x => x.Provider).ThenInclude(x => x.Services).Include(x => x.Customer).Include(x => x.Items).ThenInclude(x => x.ProviderService).FirstOrDefault(x => x.Id == Id);
+        }
+
+        if(invoice != null)
+        {
+            //compose the view model
+            _services = invoice.Provider.Services.ToList();
+            _invoiceFormModel.Provider = invoice.Provider;
+            _invoiceFormModel.Customer = invoice.Customer;
+            _invoiceFormModel.InvoiceNumber = invoice.InvoiceNumber;
+            _invoiceFormModel.InvoiceDate = invoice.Date;
+            _invoiceFormModel.Terms = invoice.Terms;
+            _invoiceFormModel.Items = invoice.Items.Select(x => new InvoiceItemViewModel { Id = x.Id, Service = x.ProviderService, Quantity = x.Quantity, UnitPrice = x.UnitPrice }).ToList();
+        }
     }
 
     private void GetProviders()
@@ -213,20 +256,68 @@
             return;
 
         var invoice = new Invoice();
+        invoice.Id = Id;
         invoice.ProviderId = _invoiceFormModel.Provider.Id;
         invoice.CustomerId = _invoiceFormModel.Customer.Id;
-        invoice.Date = _invoiceFormModel.InvoiceDate.Value;
+        invoice.Date = _invoiceFormModel.InvoiceDate.Value.ToUniversalTime();
         invoice.Terms = _invoiceFormModel.Terms;
         invoice.InvoiceNumber = _invoiceFormModel.InvoiceNumber;
-        invoice.Items = _invoiceFormModel.Items.Select(x => new InvoiceItem { ProviderServiceId = x.Service.ProviderId, Quantity = x.Quantity, UnitPrice = x.UnitPrice }).ToList();
+        invoice.Items = _invoiceFormModel.Items.Select(x => new InvoiceItem { Id = x.Id, ProviderServiceId = x.Service.Id, Quantity = x.Quantity, UnitPrice = x.UnitPrice }).ToList();
 
         using (var context = new ApplicationDbContext())
         {
-            context.Invoices.Add(invoice);
+            if (_viewMode == ViewMode.Create)
+            {
+                context.Invoices.Add(invoice);                
+            }
+            else if (_viewMode == ViewMode.Update)
+            {
+                var itemsToRemove = _itemsToRemove.Select(x => new InvoiceItem { Id = x }).ToList();
+
+                foreach (var item in itemsToRemove)
+                    context.Entry(item).State = EntityState.Deleted;
+
+                context.Invoices.Update(invoice);
+            }
 
             var result = context.SaveChanges();
+            Id = invoice.Id;
         }
-    }    
+
+        if (_viewMode == ViewMode.Create)
+        {
+            NavigationManager.NavigateTo($"invoices/{Id}", true, true);
+            Snackbar.Add("Invoice created successfully", MudBlazor.Severity.Success);
+        }
+        else if (_viewMode == ViewMode.Update)
+        {
+            Snackbar.Add("Invoice updated successfully", MudBlazor.Severity.Success);
+        }
+    }
+
+    private string GetTitle()
+    {
+        switch (_viewMode)
+        {
+            case ViewMode.Create:
+                return "Create Invoice";
+            case ViewMode.Update:
+                return "Invoice Details";
+            default:
+                return "";
+        }
+    }
+
+    List<int> _itemsToRemove = new List<int>();
+
+    private void RemoveItem(InvoiceItemViewModel invoiceItemViewModel)
+    {
+        _invoiceFormModel.Items.Remove(invoiceItemViewModel);
+
+        if (invoiceItemViewModel.Id > 0)
+            _itemsToRemove.Add(invoiceItemViewModel.Id);
+    }
+
 
     public class InvoiceViewModel
     {
@@ -240,6 +331,7 @@
 
     public class InvoiceItemViewModel
     {
+        public int Id { get; set; }
         public ProviderService Service { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
