@@ -1,7 +1,10 @@
-﻿using QuestPDF.Companion;
+﻿using MudBlazor.Extensions;
+using QuestPDF.Companion;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using SimpleServiceInvoice.Models;
+using SimpleServiceInvoice.ViewModels;
 
 namespace SimpleServiceInvoice.ReportPrototype
 {
@@ -9,13 +12,23 @@ namespace SimpleServiceInvoice.ReportPrototype
     {
         static void Main(string[] args)
         {
+            var provider = new Provider { Id = 2, Name = "Bravo Provider Company", Address = "2nd St., Fisher Avenue, Makati City", Phone = "223 - 3311", Email = "bravo @mail.com" };
+            var customer = new Customer { Id = 1, Name = "Alpha Customer", Address = "1st St., Primary Road, Davao City, Philippines", Phone = "211-2132", ContactName = "John Alpha", Email = "alpha@customer.com" };
+            var invoice = new InvoiceViewModel { Provider = provider, Customer = customer, InvoiceNumber = "0001", InvoiceDate = DateTime.Now, Terms = "Some terms here." };
+            invoice.Items =
+            [
+                new InvoiceItemViewModel { Id = 1, Service = new ProviderService { Id = 1, Description = "Alpha service" }, Quantity = 1, UnitPrice = 25.50M },
+                new InvoiceItemViewModel { Id = 2, Service = new ProviderService { Id = 1, Description = "Bravo service" }, Quantity = 1, UnitPrice = 3289.99M },
+            ];
+
             QuestPDF.Settings.License = LicenseType.Community;
 
             Document.Create(document =>
             {
                 document.Page(page =>
                 {
-                    page.Margin(0.8F, Unit.Inch);
+                    page.DefaultTextStyle(x => x.FontSize(10));
+                    page.Margin(1.3F, Unit.Centimetre);
                     page.Content().Container()
                     .Column(column =>
                     {
@@ -23,34 +36,33 @@ namespace SimpleServiceInvoice.ReportPrototype
                         {
                             row.RelativeItem(7).PaddingTop(10).ScaleToFit().Text(text =>
                             {
-                                text.Line("First Up Consultants").FontColor(Colors.Blue.Darken4).FontSize(20).Bold();
+                                text.Line(invoice.Provider.Name).FontColor(Colors.Blue.Darken4).FontSize(20).Bold();
                                 text.EmptyLine();
-                                text.Line("12 Beacon St.").FontColor(Colors.Black).FontSize(16);
-                                text.Line("Boston, MA 98765").FontColor(Colors.Black).FontSize(16);
-                                text.Line("Phone: (516) 555-0135").FontColor(Colors.Black).FontSize(16);
+                                text.Line(invoice.Provider.Address).FontColor(Colors.Black).FontSize(16);
+                                text.Line($"Phone: {invoice.Provider.Phone}").FontColor(Colors.Black).FontSize(16);
                             });
                             row.RelativeItem(3).Text("INVOICE").FontColor(Colors.Blue.Darken4).FontSize(30).AlignRight();
                         });
-                        //BILL TO
+                        
                         column.Item().Row(row =>
                         {
                             row.Spacing(20);
-                            row.RelativeItem(6).Table(table =>
+                            row.RelativeItem(5).Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
                                 {
                                     columns.RelativeColumn(1);
                                 });
 
+                                //BILL TO
                                 table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("BILL TO").FontColor(Colors.White);
-                                table.Cell().PaddingLeft(5).PaddingTop(3).Text("Jordan Mitchell");
-                                table.Cell().PaddingLeft(5).PaddingTop(3).Text("Khusa Marketing");
-                                table.Cell().PaddingLeft(5).PaddingTop(3).Text("123 Main Street");
-                                table.Cell().PaddingLeft(5).PaddingTop(3).Text("Seattle, WA 87654");
-                                table.Cell().PaddingLeft(5).PaddingTop(3).Text("(954) 555-0190");
-                                table.Cell().PaddingLeft(5).PaddingTop(3).Text("jordan@example.com");
+                                table.Cell().PaddingLeft(5).PaddingTop(3).Text(invoice.Customer.ContactName);
+                                table.Cell().PaddingLeft(5).PaddingTop(3).Text(invoice.Customer.Name);
+                                table.Cell().PaddingLeft(5).PaddingTop(3).Text(invoice.Customer.Address);                                
+                                table.Cell().PaddingLeft(5).PaddingTop(3).Text(invoice.Customer.Phone);
+                                table.Cell().PaddingLeft(5).PaddingTop(3).Text(invoice.Customer.Email);
                             });
-                            row.RelativeItem(4).Column(column =>
+                            row.RelativeItem(5).Column(column =>
                             {
                                 column.Spacing(10);
                                 //INVOICE # & DATE
@@ -58,26 +70,26 @@ namespace SimpleServiceInvoice.ReportPrototype
                                 {
                                     table.ColumnsDefinition(columns =>
                                     {
-                                        columns.RelativeColumn(5);
-                                        columns.RelativeColumn(5);
+                                        columns.RelativeColumn(4);
+                                        columns.RelativeColumn(6);
                                     });
                                     table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("INVOICE #").FontColor(Colors.White);
                                     table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("DATE").FontColor(Colors.White);
-                                    table.Cell().Padding(5).Text("2034");
-                                    table.Cell().Padding(5).Text("13/10/2025");
+                                    table.Cell().Padding(5).Text(invoice.InvoiceNumber);
+                                    table.Cell().Padding(5).Text(invoice.InvoiceDate?.ToShortDateString());
                                 });
                                 //CUSTOMERID & TERMS
                                 column.Item().Table(table =>
                                 {
                                     table.ColumnsDefinition(columns =>
                                     {
-                                        columns.RelativeColumn(5);
-                                        columns.RelativeColumn(5);
+                                        columns.RelativeColumn(4);
+                                        columns.RelativeColumn(6);
                                     });
                                     table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("CUSTOMER ID").FontColor(Colors.White);
                                     table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("TERMS").FontColor(Colors.White);
-                                    table.Cell().Padding(5).Text("2034");
-                                    table.Cell().Padding(5).Text("13/10/2025");
+                                    table.Cell().Padding(5).Text(invoice.Customer.Id.ToString());
+                                    table.Cell().Padding(5).Text(invoice.Terms);
                                 });
                             });
                         });
@@ -101,18 +113,18 @@ namespace SimpleServiceInvoice.ReportPrototype
                                 header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("AMOUNT").FontColor(Colors.White).AlignCenter();
                             });
 
-                            foreach (var i in Enumerable.Range(1, 5))
+                            foreach (var item in invoice.Items)
                             {
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text("Service fee");
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text("1").AlignRight();
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text("23.23").AlignRight();
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text("23.23").AlignRight();
-                            }
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Service.Description);
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Quantity.ToString()).AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(item.UnitPrice.ToString("N2")).AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Total.ToString("N2")).AlignRight();
+                            }                            
 
                             table.Cell().Border(1, Colors.Black).Padding(5).Text("Thank you for your business!").FontColor(Colors.Blue.Darken4).AlignCenter().Italic();
                             table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                             table.Cell().Border(1, Colors.Black).Padding(5).Text("TOTAL").AlignRight();
-                            table.Cell().Border(1, Colors.Black).Padding(5).Text("123.23").AlignRight();
+                            table.Cell().Border(1, Colors.Black).Padding(5).Text(invoice.Items.Sum(x => x.Total).ToString("N2")).AlignRight();
                         });
 
                         column.Item().PaddingTop(20).Text("If you have any questions about this invoice, please contact").FontSize(10).Italic().AlignCenter();
