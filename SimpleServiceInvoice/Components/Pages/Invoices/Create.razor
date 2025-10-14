@@ -15,6 +15,7 @@
         <MudText Typo="Typo.h6" Class="ml-2">@GetTitle()</MudText>
         <MudSpacer></MudSpacer>
         <MudTooltip Text="Save">
+            <MudIconButton Icon="@Icons.Material.Outlined.Print" OnClick="Print" />
             <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" />
         </MudTooltip>
     </MudToolBar>
@@ -130,6 +131,7 @@
     MudForm _invoiceForm;
     InvoiceViewModel _invoiceFormModel = new InvoiceViewModel();
     ViewMode _viewMode = ViewMode.Create;
+    List<int> _itemsToRemove = new List<int>();
 
     [Parameter]
     public int Id { get; set; }
@@ -308,14 +310,17 @@
         }
     }
 
-    List<int> _itemsToRemove = new List<int>();
-
     private void RemoveItem(InvoiceItemViewModel invoiceItemViewModel)
     {
         _invoiceFormModel.Items.Remove(invoiceItemViewModel);
 
         if (invoiceItemViewModel.Id > 0)
             _itemsToRemove.Add(invoiceItemViewModel.Id);
+    }
+
+    private void Print()
+    {
+        
     }
 
 
