@@ -4,6 +4,7 @@ namespace SimpleServiceInvoice.ViewModels
 {
     public class InvoiceViewModel
     {
+        public int Id { get; set; }
         public Provider Provider { get; set; }
         public Customer Customer { get; set; }
         public string InvoiceNumber { get; set; }

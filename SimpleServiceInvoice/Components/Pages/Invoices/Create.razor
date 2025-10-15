@@ -4,9 +4,11 @@
 @using Microsoft.EntityFrameworkCore
 @using SimpleServiceInvoice.Data
 @using SimpleServiceInvoice.Models
+@using SimpleServiceInvoice.Services
 @using SimpleServiceInvoice.ViewModels
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <MudPaper Class="my-2">
     <MudToolBar Class="px-2">
@@ -15,8 +17,10 @@
         </MudTooltip>
         <MudText Typo="Typo.h6" Class="ml-2">@GetTitle()</MudText>
         <MudSpacer></MudSpacer>
-        <MudTooltip Text="Save">
+        <MudTooltip Text="Print">
             <MudIconButton Icon="@Icons.Material.Outlined.Print" OnClick="Print" />
+        </MudTooltip>
+        <MudTooltip Text="Save">
             <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" />
         </MudTooltip>
     </MudToolBar>
@@ -177,6 +181,7 @@
         {
             //compose the view model
             _services = invoice.Provider.Services.ToList();
+            _invoiceFormModel.Id = invoice.Id;
             _invoiceFormModel.Provider = invoice.Provider;
             _invoiceFormModel.Customer = invoice.Customer;
             _invoiceFormModel.InvoiceNumber = invoice.InvoiceNumber;
@@ -319,8 +324,14 @@
             _itemsToRemove.Add(invoiceItemViewModel.Id);
     }
 
-    private void Print()
+    private async Task Print()
     {
-        
-    }    
+        var reportService = new ReportService();
+
+        var invoicePath = reportService.GenerateInvoice(_invoiceFormModel);
+
+        var fileStream = File.OpenRead(invoicePath);
+        using var streamRef = new DotNetStreamReference(fileStream);
+        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", invoicePath, streamRef);
+    }
 }

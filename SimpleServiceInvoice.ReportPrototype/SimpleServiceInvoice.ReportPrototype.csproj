@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="QuestPDF" Version="2025.7.2" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\SimpleServiceInvoice\SimpleServiceInvoice.csproj" />
   </ItemGroup>
 
