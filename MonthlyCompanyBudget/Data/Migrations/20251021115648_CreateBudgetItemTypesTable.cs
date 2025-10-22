@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace MonthlyCompanyBudget.Migrations
+namespace MonthlyCompanyBudget.Data.Migrations
 {
     /// <inheritdoc />
     public partial class CreateBudgetItemTypesTable : Migration

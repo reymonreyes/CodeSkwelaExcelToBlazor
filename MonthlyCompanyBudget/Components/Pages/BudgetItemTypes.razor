@@ -1,8 +1,43 @@
 ﻿@page "/budgetitemtypes"
+@using MonthlyCompanyBudget.Data
+@using Entities = Core.Entities
+@using MonthlyCompanyBudget.Shared
 
-<MudText Typo="Typo.h6">Budget Item Types</MudText>
+<MudToolBar>
+    <MudText Typo="Typo.h6">Budget Item Types</MudText>
+    <MudSpacer></MudSpacer>
+    <MudTooltip Text="Create">
+        <MudIconButton Icon="@Icons.Material.Outlined.Add" Href="" />
+    </MudTooltip>
+</MudToolBar>
+<MudSimpleTable Dense="true" Bordered="true" Hover="true">
+    <thead>
+        <tr><th>Name</th><th>Category</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var item in _budgetItemTypes)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Category.GetDescription()</td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
 
 @code {
+    private List<Entities.BudgetItemType> _budgetItemTypes = new List<Entities.BudgetItemType>();
 
+    protected override void OnInitialized()
+    {
+        GetBudgetItemTypes();
+    }
 
+    private void GetBudgetItemTypes()
+    {
+        using(var context = new ApplicationDbContext())
+        {
+            _budgetItemTypes = context.BudgetItemTypes.ToList();
+        }
+    }
 }
