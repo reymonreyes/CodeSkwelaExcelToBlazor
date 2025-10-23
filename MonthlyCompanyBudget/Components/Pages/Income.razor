@@ -1,0 +1,44 @@
+﻿@page "/income"
+@using MonthlyCompanyBudget.Data
+
+<MudToolBar>
+    <MudText Typo="Typo.h6">Budget Item Types</MudText>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudText Class="mr-2">Month:</MudText>
+    <MudDatePicker @bind-Date="_monthOf" OpenTo="OpenTo.Year" FixDay="1" DateFormat="MMMM yyyy"/>
+    @* <MudSelect @bind-Value="_monthOf" Text="@_monthOf?.ToString("MMMM yyyy")">
+        <MudSelectItem Value="@DateTime.Now">@DateTime.Now.ToString("MMMM yyyy")</MudSelectItem>
+        <MudSelectItem Value="@DateTime.Now.AddMonths(-1)">@DateTime.Now.AddMonths(-1).ToString("MMMM yyyy")</MudSelectItem>
+        <MudSelectItem Value="@DateTime.Now.AddMonths(-2)">@DateTime.Now.AddMonths(-2).ToString("MMMM yyyy")</MudSelectItem>
+    </MudSelect>     *@
+    <MudSpacer></MudSpacer>
+    <MudTooltip Text="Add Month">
+        <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="AddMonth" />
+    </MudTooltip>
+</MudToolBar>
+
+@code {
+    DateTime? _monthOf = DateTime.Now;
+
+    private void LoadMonthlyBudget()
+    {
+
+    }
+
+    private void AddMonth()
+    {
+        using(var context = new ApplicationDbContext())
+        {
+            var budgetItemTypes = context.BudgetItemTypes.ToList();
+
+            foreach (var budgetItemType in budgetItemTypes)
+            {
+                
+            }
+        }
+    }
+}

@@ -8,6 +8,8 @@ namespace MonthlyCompanyBudget.Data
     {
         private string _dbPath;
         public DbSet<BudgetItemType> BudgetItemTypes { get; set; }
+        public DbSet<MonthlyBudget> MonthlyBudgets { get; set; }
+        public DbSet<MonthlyBudgetItem> MonthlyBudgetItems { get; set; }
 
         public ApplicationDbContext()
         {
