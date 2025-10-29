@@ -11,6 +11,7 @@
     {
         public int Id { get; set; }
         public int MonthlyBudgetId { get; set; }
+        public MonthlyBudget MonthlyBudget { get; set; }
         public int BudgetItemTypeId { get; set; }
         public BudgetItemType BudgetItemType { get; set; }
         public decimal EstimatedValue { get; set; }

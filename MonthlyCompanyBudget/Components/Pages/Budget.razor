@@ -1,8 +1,10 @@
-﻿@page "/income"
+﻿@page "/budget/{category}"
 @using Microsoft.EntityFrameworkCore
 @using MonthlyCompanyBudget.Core.Entities
+@using MonthlyCompanyBudget.Core.Enums
 @using MonthlyCompanyBudget.Data
 @inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 
 <MudToolBar>
     <MudText Typo="Typo.h6">Monthly Income</MudText>
@@ -12,10 +14,10 @@
     <MudSpacer></MudSpacer>
     <MudSpacer></MudSpacer>
     <MudText Class="mr-2">Month:</MudText>
-    <MudSelect T="DateTime" Value="@_monthFilter" ToStringFunc="@(x => x.ToString("MMMM yyyy"))" ValueChanged="GetMonthlyBudgetItems">
-        @foreach(var item in _monthlyBudgets)
+    <MudSelect T="MonthlyBudget" Value="@_monthlyBudgetFilter" ToStringFunc="@(x => x != null ? x.Date.ToString("MMMM yyyy") : string.Empty)" ValueChanged="@((filter) => GetMonthlyBudgetItems(filter))">
+        @foreach (var item in _monthlyBudgets)
         {
-            <MudSelectItem Value="@item.Date">@item.Date.ToString("MMMM yyyy")</MudSelectItem>            
+            <MudSelectItem Value="@item">@item.Date.ToString("MMMM yyyy")</MudSelectItem>
         }
     </MudSelect>    
     <MudSpacer></MudSpacer>
@@ -23,7 +25,7 @@
         <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="@(() => _addMonthlyBudgetDialogVisible = true)" />
     </MudTooltip>
     <MudTooltip Text="Save Changes">
-        <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" />
+        <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" Disabled="_budgetItems == null || !_budgetItems.Any()"/>
     </MudTooltip>
 </MudToolBar>
 <MudGrid Spacing="0" Class="border border-solid rounded" Style="@($"border-color: {Colors.Gray.Lighten3};")">
@@ -121,39 +123,60 @@
 
 @code {
     DateTime? _monthOf;
-    DateTime _monthFilter;
     private bool _addMonthlyBudgetDialogVisible;
     MudForm _addMonthlyBudgetForm;
     List<MonthlyBudgetItem> _budgetItems = new List<MonthlyBudgetItem>();
     List<MonthlyBudget> _monthlyBudgets = new List<MonthlyBudget>();
+    BudgetItemTypeCategory? _category;
+    MonthlyBudget? _monthlyBudgetFilter;
 
-    protected override async Task OnInitializedAsync()
+    [Parameter]
+    public string Category { get; set; }
+    
+    protected override async Task OnParametersSetAsync()
     {
+        if (!(Category == BudgetItemTypeCategory.Income.ToString() || Category == BudgetItemTypeCategory.OperatingExpenses.ToString() || Category == BudgetItemTypeCategory.PersonnelExpenses.ToString()))
+            NavigationManager.NavigateTo("/Error");
+
+        if (Category == BudgetItemTypeCategory.Income.ToString())
+            _category = BudgetItemTypeCategory.Income;
+        else if (Category == BudgetItemTypeCategory.OperatingExpenses.ToString())
+            _category = BudgetItemTypeCategory.OperatingExpenses;
+        else if (Category == BudgetItemTypeCategory.PersonnelExpenses.ToString())
+            _category = BudgetItemTypeCategory.PersonnelExpenses;
+
         await GetMonthlyBudgets();
-        await GetMonthlyBudgetItems(_monthFilter);
+        _monthlyBudgetFilter = _monthlyBudgets.FirstOrDefault();
+        await GetMonthlyBudgetItems(_monthlyBudgetFilter, true);
     }
 
-
-    private void FilterMonthlyBudget(DateTime month)
+    private async Task GetMonthlyBudgetItems(MonthlyBudget monthlyBudget, bool loadDefault = false)
     {
-        _monthFilter = month;
-    }
+        _monthlyBudgetFilter = monthlyBudget;
 
-    private async Task GetMonthlyBudgetItems(DateTime month)
-    {
-        _monthFilter = month;
-        MonthlyBudget? monthlyBudget = null;
-
-        using (var context = new ApplicationDbContext())
+        if (monthlyBudget != null)
         {
-            var incomeType = await context.BudgetItemTypes.FirstOrDefaultAsync(x => x.Category == Core.Enums.BudgetItemTypeCategory.Income);
+            using (var context = new ApplicationDbContext())
+            {                
+                var budgetItemsByCategory = await context.MonthlyBudgetItems.Include(x => x.MonthlyBudget).Include(x => x.BudgetItemType).Where(x => x.BudgetItemType.Category == _category).ToListAsync();                
+                _monthlyBudgets = budgetItemsByCategory.Select(x => x.MonthlyBudget).Distinct().OrderByDescending(x => x.Date).ToList();
 
-            var monthOf = new DateTime(month.Year, month.Month, month.Day, 0, 0, 0);
-            monthlyBudget = await context.MonthlyBudgets.Include(x => x.Items).ThenInclude(x => x.BudgetItemType).FirstOrDefaultAsync(x => x.Date == monthOf);
-
-            if (incomeType != null && monthlyBudget != null)
-            {
-                _budgetItems = monthlyBudget.Items;
+                if (loadDefault)
+                {
+                    var defaultMonthlyBudget = _monthlyBudgets.FirstOrDefault();
+                    _monthlyBudgetFilter = defaultMonthlyBudget;
+                    _budgetItems = new List<MonthlyBudgetItem>();
+                    if(defaultMonthlyBudget != null)
+                    {
+                        var monthFilter = new DateTime(defaultMonthlyBudget.Date.Year, defaultMonthlyBudget.Date.Month, defaultMonthlyBudget.Date.Day, 0, 0, 0);
+                        _budgetItems = budgetItemsByCategory.Where(x => x.MonthlyBudget.Date == monthFilter).ToList();
+                    }
+                }
+                else
+                {
+                    var monthOf = new DateTime(monthlyBudget.Date.Year, monthlyBudget.Date.Month, monthlyBudget.Date.Day, 0, 0, 0);
+                    _budgetItems = budgetItemsByCategory.Where(x => x.MonthlyBudget.Date == monthOf).ToList();
+                }                
             }
         }
     }
@@ -165,7 +188,7 @@
         {
             using(var context = new ApplicationDbContext())
             {
-                var budgetItemTypes = context.BudgetItemTypes.Where(x => x.Category == Core.Enums.BudgetItemTypeCategory.Income).ToList();
+                var budgetItemTypes = context.BudgetItemTypes.Where(x => x.Category == _category).ToList();
 
                 var monthlyBudget = new MonthlyBudget { Date = _monthOf.Value };
 
@@ -177,35 +200,38 @@
                 context.MonthlyBudgets.Add(monthlyBudget);
                 await context.SaveChangesAsync();
 
+                _monthOf = null;
                 _addMonthlyBudgetDialogVisible = false;
 
                 await GetMonthlyBudgets();
-                await GetMonthlyBudgetItems(monthlyBudget.Date);
+                await GetMonthlyBudgetItems(monthlyBudget);
             }
         }
     }
 
     private async Task Save()
     {
-        using(var context = new ApplicationDbContext())
+        if (_budgetItems != null)
         {
-            foreach (var item in _budgetItems)
+            using (var context = new ApplicationDbContext())
             {
-                context.MonthlyBudgetItems.Update(item);
+                foreach (var item in _budgetItems)
+                {
+                    context.MonthlyBudgetItems.Update(item);
+                }
+                await context.SaveChangesAsync();
             }
-            await context.SaveChangesAsync();
+            Snackbar.Add("Invoice saved successfully", MudBlazor.Severity.Success);
         }
-        Snackbar.Add("Invoice saved successfully", MudBlazor.Severity.Success);
     }
 
     private async Task GetMonthlyBudgets()
     {
+        _monthlyBudgets = new List<MonthlyBudget>();
         //get the last 12 months
         using(var context = new ApplicationDbContext())
         {
             _monthlyBudgets = await context.MonthlyBudgets.OrderByDescending(x => x.Date).Take(12).ToListAsync();
         }
-        //_monthlyBudgetFilter = _monthlyBudgets.FirstOrDefault();
-        _monthFilter = _monthlyBudgets.FirstOrDefault().Date;
     }
 }
