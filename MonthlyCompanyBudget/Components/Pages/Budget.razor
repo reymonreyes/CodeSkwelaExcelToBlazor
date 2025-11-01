@@ -1,0 +1,238 @@
+﻿@page "/budget/{category}"
+@using Microsoft.EntityFrameworkCore
+@using MonthlyCompanyBudget.Core.Entities
+@using MonthlyCompanyBudget.Core.Enums
+@using MonthlyCompanyBudget.Data
+@using MonthlyCompanyBudget.Shared
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudToolBar>
+    <MudText Typo="Typo.h6">Monthly @_category.Value.GetDescription()</MudText>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudText Class="mr-2">Month:</MudText>
+    <MudSelect T="MonthlyBudget" Value="@_monthlyBudgetFilter" ToStringFunc="@(x => x != null ? x.Date.ToString("MMMM yyyy") : string.Empty)" ValueChanged="@((filter) => GetMonthlyBudgetItems(filter))">
+        @foreach (var item in _monthlyBudgets)
+        {
+            <MudSelectItem Value="@item">@item.Date.ToString("MMMM yyyy")</MudSelectItem>
+        }
+    </MudSelect>    
+    <MudSpacer></MudSpacer>
+    <MudTooltip Text="Add Month">
+        <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="@(() => _addMonthlyBudgetDialogVisible = true)" />
+    </MudTooltip>
+    <MudTooltip Text="Save Changes">
+        <MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="Save" Disabled="_budgetItems == null || !_budgetItems.Any()"/>
+    </MudTooltip>
+</MudToolBar>
+<MudGrid Spacing="0" Class="border border-solid rounded" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+    <MudItem md="4" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+        <MudText Align="Align.Center" Style="@($"font-size: 0.875rem;color: {Colors.Gray.Darken3};font-weight: 500;")">INCOME</MudText>
+    </MudItem>
+    <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+        <MudText Align="Align.Center" Style="@($"font-size: 0.875rem;color: {Colors.Gray.Darken3};font-weight: 500;")">ESTIMATED</MudText>
+    </MudItem>
+    <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+        <MudText Align="Align.Center" Style="@($"font-size: 0.875rem;color: {Colors.Gray.Darken3};font-weight: 500;")">ACTUAL</MudText>
+    </MudItem>
+    <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+        <MudText Align="Align.Center" Style="@($"font-size: 0.875rem;color: {Colors.Gray.Darken3};font-weight: 500;")">TOP 5 AMOUNT</MudText>
+    </MudItem>
+    <MudItem md="2" Class="border-b border-r border-solid pa-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+        <MudText Align="Align.Center" Style="@($"font-size: 0.875rem;color: {Colors.Gray.Darken3};font-weight: 500;")">DIFFERENCE</MudText>
+    </MudItem>
+    <MudItem md="12" lg="12">
+        @foreach (var item in _budgetItems)
+        {
+            <MudForm Model="item">
+                <MudGrid Spacing="0">                    
+                    <MudItem md="4" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                        <MudField Class="no-underline">@item.BudgetItemType.Name</MudField>                        
+                    </MudItem>
+                    <MudItem md="2" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                        <MudNumericField @bind-Value="@item.EstimatedValue" Class="no-underline text-right" Format="N2"></MudNumericField>
+                    </MudItem>
+                    <MudItem md="2" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                        <MudNumericField @bind-Value="@item.ActualValue" Class="no-underline text-right" Format="N2"></MudNumericField>
+                    </MudItem>
+                    <MudItem md="2" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                        <MudField Class="no-underline text-right">@item.Top5Amount.ToString("N2")</MudField>
+                    </MudItem>
+                    <MudItem md="2" Class="border-b border-r border-solid pa-0 pr-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                        <MudField Class="no-underline text-right"><MudText Class="@(item.Difference < 0 ? "mud-secondary-text" : "")">@item.Difference.ToString("N2")</MudText></MudField>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        }
+    </MudItem>
+    <MudItem md="12" lg="12">
+        <MudGrid Spacing="0">
+            <MudItem md="4" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                <MudField Class="no-underline"><b>Total Income</b></MudField>
+            </MudItem>
+            <MudItem md="2" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                <MudField Class="no-underline text-right"><b>@_budgetItems.Sum(x => x.EstimatedValue).ToString("N2")</b></MudField>
+            </MudItem>
+            <MudItem md="2" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                <MudField Class="no-underline text-right"><b>@_budgetItems.Sum(x => x.ActualValue).ToString("N2")</b></MudField>
+            </MudItem>
+            <MudItem md="2" Class="border-b border-r border-solid pa-1" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")"></MudItem>
+            <MudItem md="2" Class="border-b border-r border-solid pa-0 pr-2" Square="true" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                <MudField Class="no-underline text-right"><MudText Class="@(_budgetItems.Sum(x => x.Difference) < 0 ? "mud-secondary-text" : "")"><b>@_budgetItems.Sum(x => x.Difference).ToString("N2")</b></MudText></MudField>
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+</MudGrid>
+<MudDialog @bind-Visible="_addMonthlyBudgetDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Please select Year and Month
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_addMonthlyBudgetForm">
+            <MudDatePicker @bind-Date="_monthOf" OpenTo="OpenTo.Year" FixDay="1" DateFormat="MMMM yyyy" Required/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _addMonthlyBudgetDialogVisible = false)" Class="px-10">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="AddMonth" Class="px-10">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+<style>
+    .no-underline .mud-input.mud-input-text.mud-input-underline:before {
+        border-bottom: none;
+    }
+
+    .text-right .mud-input input.mud-input-slot,
+    .text-right .mud-input .mud-input-slot {
+        text-align: right;
+    }
+
+    .normal-text-on-disabled .mud-input input.mud-input-slot {
+        color: black;
+    }
+
+    .warning-text .mud-input input.mud-input-slot {
+        color: black;
+    }
+</style>
+
+@code {
+    DateTime? _monthOf;
+    private bool _addMonthlyBudgetDialogVisible;
+    MudForm _addMonthlyBudgetForm;
+    List<MonthlyBudgetItem> _budgetItems = new List<MonthlyBudgetItem>();
+    List<MonthlyBudget> _monthlyBudgets = new List<MonthlyBudget>();
+    BudgetItemTypeCategory? _category;
+    MonthlyBudget? _monthlyBudgetFilter;
+
+    [Parameter]
+    public string Category { get; set; }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!(Category == BudgetItemTypeCategory.Income.ToString() || Category == BudgetItemTypeCategory.OperatingExpenses.ToString() || Category == BudgetItemTypeCategory.PersonnelExpenses.ToString()))
+            NavigationManager.NavigateTo("/Error");
+
+        if (Category == BudgetItemTypeCategory.Income.ToString())
+            _category = BudgetItemTypeCategory.Income;
+        else if (Category == BudgetItemTypeCategory.OperatingExpenses.ToString())
+            _category = BudgetItemTypeCategory.OperatingExpenses;
+        else if (Category == BudgetItemTypeCategory.PersonnelExpenses.ToString())
+            _category = BudgetItemTypeCategory.PersonnelExpenses;
+
+        await GetMonthlyBudgets();
+        _monthlyBudgetFilter = _monthlyBudgets.FirstOrDefault();
+        await GetMonthlyBudgetItems(_monthlyBudgetFilter, true);
+    }
+
+    private async Task GetMonthlyBudgetItems(MonthlyBudget monthlyBudget, bool loadDefault = false)
+    {
+        _monthlyBudgetFilter = monthlyBudget;
+
+        if (monthlyBudget != null)
+        {
+            using (var context = new ApplicationDbContext())
+            {                
+                var budgetItemsByCategory = await context.MonthlyBudgetItems.Include(x => x.MonthlyBudget).Include(x => x.BudgetItemType).Where(x => x.BudgetItemType.Category == _category).ToListAsync();                
+                _monthlyBudgets = budgetItemsByCategory.Select(x => x.MonthlyBudget).Distinct().OrderByDescending(x => x.Date).ToList();
+
+                if (loadDefault)
+                {
+                    var defaultMonthlyBudget = _monthlyBudgets.FirstOrDefault();
+                    _monthlyBudgetFilter = defaultMonthlyBudget;
+                    _budgetItems = new List<MonthlyBudgetItem>();
+                    if(defaultMonthlyBudget != null)
+                    {
+                        var monthFilter = new DateTime(defaultMonthlyBudget.Date.Year, defaultMonthlyBudget.Date.Month, defaultMonthlyBudget.Date.Day, 0, 0, 0);
+                        _budgetItems = budgetItemsByCategory.Where(x => x.MonthlyBudget.Date == monthFilter).ToList();
+                    }
+                }
+                else
+                {
+                    var monthOf = new DateTime(monthlyBudget.Date.Year, monthlyBudget.Date.Month, monthlyBudget.Date.Day, 0, 0, 0);
+                    _budgetItems = budgetItemsByCategory.Where(x => x.MonthlyBudget.Date == monthOf).ToList();
+                }                
+            }
+        }
+    }
+
+    private async Task AddMonth()
+    {
+        await _addMonthlyBudgetForm.Validate();
+        if (_addMonthlyBudgetForm.IsValid)
+        {
+            using(var context = new ApplicationDbContext())
+            {
+                var budgetItemTypes = context.BudgetItemTypes.Where(x => x.Category == _category).ToList();
+
+                var monthlyBudget = new MonthlyBudget { Date = _monthOf.Value };
+
+                foreach (var budgetItemType in budgetItemTypes)
+                {
+                    monthlyBudget.Items.Add(new MonthlyBudgetItem { BudgetItemTypeId = budgetItemType.Id, EstimatedValue = 0, ActualValue = 0 });
+                }
+
+                context.MonthlyBudgets.Add(monthlyBudget);
+                await context.SaveChangesAsync();
+
+                _monthOf = null;
+                _addMonthlyBudgetDialogVisible = false;
+
+                await GetMonthlyBudgets();
+                await GetMonthlyBudgetItems(monthlyBudget);
+            }
+        }
+    }
+
+    private async Task Save()
+    {
+        if (_budgetItems != null)
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                foreach (var item in _budgetItems)
+                {
+                    context.MonthlyBudgetItems.Update(item);
+                }
+                await context.SaveChangesAsync();
+            }
+            Snackbar.Add("Invoice saved successfully", MudBlazor.Severity.Success);
+        }
+    }
+
+    private async Task GetMonthlyBudgets()
+    {
+        _monthlyBudgets = new List<MonthlyBudget>();
+        //get the last 12 months
+        using(var context = new ApplicationDbContext())
+        {
+            _monthlyBudgets = await context.MonthlyBudgets.OrderByDescending(x => x.Date).Take(12).ToListAsync();
+        }
+    }
+}

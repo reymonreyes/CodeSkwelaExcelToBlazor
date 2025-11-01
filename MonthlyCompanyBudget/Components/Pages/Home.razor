@@ -1,0 +1,115 @@
+﻿@page "/"
+@using Microsoft.EntityFrameworkCore
+@using MonthlyCompanyBudget.Core.Entities
+@using MonthlyCompanyBudget.Data
+@using MonthlyCompanyBudget.ViewModels
+
+<PageTitle>MONTHLY BUDGET</PageTitle>
+
+<MudToolBar>
+    <MudText Typo="Typo.h6">Monthly Income @_monthOf?.ToString("MMMM yyyy")</MudText>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>
+    <MudSpacer></MudSpacer>    
+</MudToolBar>
+<MudGrid Spacing="2">
+    <MudItem sm="12" md="6" lg="6" xl="6">
+        <MudChart ChartType="ChartType.Bar" ChartSeries="_chartSeries" XAxisLabels="_xAxisLabels" Width="100%" Height="100%"></MudChart>
+    </MudItem>
+    <MudItem sm="12" md="6" lg="6" xl="6">
+        <MudGrid>
+            <MudItem sm="12" md="12" lg="12" xl="12">
+                <MudSimpleTable Bordered="true">
+                    <thead>
+                        <tr><th>BUDGET TOTALS</th><th>ESTIMATED</th><th>ACTUAL</th><th>DIFFERENCE</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><MudText>Income</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.IncomeEstimatedTotal < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.IncomeEstimatedTotal.ToString("N2")</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.IncomeActualTotal < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.IncomeActualTotal.ToString("N2")</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.IncomeDifference < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.IncomeDifference.ToString("N2")</MudText></td>
+                        </tr>
+                        <tr>
+                            <td><MudText>Expense</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.ExpensesEstimatedTotal < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.ExpensesEstimatedTotal.ToString("N2")</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.ExpensesActualTotal < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.ExpensesActualTotal.ToString("N2")</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.ExpensesDifference < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.ExpensesDifference.ToString("N2")</MudText></td>
+                        </tr>
+                        <tr>
+                            <td><MudText>Balance (income minus expenses)</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.EstimatedBalance < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.EstimatedBalance.ToString("N2")</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.ActualBalance < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.ActualBalance.ToString("N2")</MudText></td>
+                            <td><MudText Align="Align.Right" Class="@(_summaryTotals.BalanceDifference < 0 ? "mud-secondary-text" : string.Empty)">@_summaryTotals.BalanceDifference.ToString("N2")</MudText></td>
+                        </tr>
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+            <MudItem sm="12" md="12" lg="12" xl="12">
+                <MudSimpleTable Bordered="true">
+                    <thead>
+                        <tr><th>EXPENSE</th><th>AMOUNT</th><th>% OF EXPENSES</th><th>15% REDUCTION</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _top5OperatingExpenses)
+                        {
+                            <tr>
+                                <td><MudText>@item.BudgetItemType.Name</MudText></td>
+                                <td><MudText Align="Align.Right">@item.ActualValue.ToString("N2")</MudText></td>
+                                <td><MudText Align="Align.Right">@((item.ActualValue/_summaryTotals.ExpensesActualTotal).ToString("N2"))</MudText></td>
+                                <td><MudText Align="Align.Right">@((item.ActualValue * (decimal)0.15).ToString("N2"))</MudText></td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+        </MudGrid>        
+    </MudItem>    
+</MudGrid>
+@code{
+    private SummaryTotals _summaryTotals = new ();
+    private DateTime? _monthOf;
+    private string[] _xAxisLabels = { "", "Estimated", "Actual", ""};
+    private List<ChartSeries> _chartSeries = new List<ChartSeries>();
+    private List<MonthlyBudgetItem> _top5OperatingExpenses = new List<MonthlyBudgetItem>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetBudgetTotal();
+    }
+
+    private async Task GetBudgetTotal()
+    {
+        //for the latest month only
+        using(var context = new ApplicationDbContext())
+        {
+            var budgetMonthsByDate = await context.MonthlyBudgets.Include(x => x.Items).ThenInclude(x => x.BudgetItemType).GroupBy(x => x.Date).ToListAsync();
+            var latestMonth = budgetMonthsByDate.OrderByDescending(x => x.Key).Take(1).FirstOrDefault();
+
+            if(latestMonth != null)
+            {
+                var budgetItems =  latestMonth.SelectMany(x => x.Items).ToList();
+                _summaryTotals = new SummaryTotals(budgetItems);
+                _monthOf = latestMonth.Key;
+
+                _chartSeries.Add(new ChartSeries() { Name = "Income", Data = new double[] { 0, (double)_summaryTotals.IncomeEstimatedTotal, (double)_summaryTotals.IncomeActualTotal, 0 } });
+                _chartSeries.Add(new ChartSeries() { Name = "Expenses", Data = new double[] { 0, (double)_summaryTotals.ExpensesEstimatedTotal, (double)_summaryTotals.ExpensesActualTotal, 0 } });
+
+                //this what my initial thought but moved it into a class
+                // _summaryTotals.IncomeEstimatedTotal = latestMonth.Items.Where(x => x.BudgetItemType.Category == Core.Enums.BudgetItemTypeCategory.Income).Sum(x => x.EstimatedValue);
+                // _summaryTotals.PersonnelExpensesEstimatedTotal = latestMonth.Items.Where(x => x.BudgetItemType.Category == Core.Enums.BudgetItemTypeCategory.PersonnelExpenses).Sum(x => x.EstimatedValue);
+                // _summaryTotals.OperatingExpensesEstimatedTotal = latestMonth.Items.Where(x => x.BudgetItemType.Category == Core.Enums.BudgetItemTypeCategory.OperatingExpenses).Sum(x => x.EstimatedValue);
+                // _summaryTotals.IncomeActualTotal = latestMonth.Items.Where(x => x.BudgetItemType.Category == Core.Enums.BudgetItemTypeCategory.Income).Sum(x => x.ActualValue);
+                // _summaryTotals.PersonnelExpensesActualTotal = latestMonth.Items.Where(x => x.BudgetItemType.Category == Core.Enums.BudgetItemTypeCategory.PersonnelExpenses).Sum(x => x.ActualValue);
+                // _summaryTotals.OperatingExpensesActualTotal = latestMonth.Items.Where(x => x.BudgetItemType.Category == Core.Enums.BudgetItemTypeCategory.OperatingExpenses).Sum(x => x.ActualValue);
+
+                _top5OperatingExpenses = budgetItems.Where(x => x.BudgetItemType.Category == Core.Enums.BudgetItemTypeCategory.OperatingExpenses)
+                    .OrderByDescending(x => x.Top5Amount).Take(5).ToList();
+            }
+        }
+    }
+
+    
+}

@@ -1,0 +1,79 @@
+﻿@using Core.Enums
+@using MonthlyCompanyBudget.Core.Entities
+@using MonthlyCompanyBudget.Shared
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudTextField @bind-Value="@_name" Label="Name" Required/>
+            <MudSelect @bind-Value="@_category" Label="Category" Validation="@(new Func<int, string>(ValidateCategory))">
+                @foreach (var category in categoriesSelect)
+                {
+                    <MudSelectItem Value="category.Key">
+                        @if(category.Key == 0)
+                        {
+                            <span>&nbsp;</span>
+                        }
+                        else
+                        {
+                            @category.Value
+                        }
+                    </MudSelectItem>                        
+                }
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string _name;
+    private int _category = 0;
+    private MudForm _form;
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public BudgetItemType BudgetItemType { get; set; } = new BudgetItemType();
+
+    private Dictionary<int, string> categoriesSelect = new Dictionary<int, string>
+    {
+        {0, "Select..."},
+        {(int)BudgetItemTypeCategory.Income, BudgetItemTypeCategory.Income.GetDescription()},
+        {(int)BudgetItemTypeCategory.PersonnelExpenses, BudgetItemTypeCategory.PersonnelExpenses.GetDescription()},
+        {(int)BudgetItemTypeCategory.OperatingExpenses, BudgetItemTypeCategory.OperatingExpenses.GetDescription()}
+    };
+
+    protected override void OnInitialized()
+    {
+        _name = BudgetItemType.Name;
+        _category = (int)BudgetItemType.Category;
+    }
+
+    private void Submit()
+    {
+        _form.Validate();
+
+        if(_form.IsValid)
+        {
+            BudgetItemType.Name = _name;
+            BudgetItemType.Category = (BudgetItemTypeCategory)_category;
+
+            MudDialog.Close(DialogResult.Ok(BudgetItemType));
+        }
+    } 
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private string ValidateCategory(int category)
+    {
+        if (category == 0)
+            return "Invalid Category";
+
+        return null;
+    }
+}

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleServiceInvoice", "Sim
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleServiceInvoice.ReportPrototype", "SimpleServiceInvoice.ReportPrototype\SimpleServiceInvoice.ReportPrototype.csproj", "{3B505B9B-40BF-41E1-97EA-3DEF71C69B24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonthlyCompanyBudget", "MonthlyCompanyBudget\MonthlyCompanyBudget.csproj", "{3AF47B9F-501A-4BCD-A74D-67AAE722F00D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{3B505B9B-40BF-41E1-97EA-3DEF71C69B24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B505B9B-40BF-41E1-97EA-3DEF71C69B24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B505B9B-40BF-41E1-97EA-3DEF71C69B24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AF47B9F-501A-4BCD-A74D-67AAE722F00D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AF47B9F-501A-4BCD-A74D-67AAE722F00D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AF47B9F-501A-4BCD-A74D-67AAE722F00D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AF47B9F-501A-4BCD-A74D-67AAE722F00D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

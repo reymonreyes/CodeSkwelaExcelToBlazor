@@ -1,0 +1,12 @@
+﻿@using MonthlyCompanyBudget.Core.Enums
+
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="@($"budget/{BudgetItemTypeCategory.Income}")" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AttachMoney">Income</MudNavLink>
+    <MudNavLink Href="@($"budget/{BudgetItemTypeCategory.PersonnelExpenses}")" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Badge">Personnel Expenses</MudNavLink>
+    <MudNavLink Href="@($"budget/{BudgetItemTypeCategory.OperatingExpenses}")" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ReceiptLong">Operating Expenses</MudNavLink>
+    <MudNavLink Href="budgetitemtypes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Budget Item Types</MudNavLink>    
+
+</MudNavMenu>
+
+
