@@ -3,11 +3,12 @@
 @using MonthlyCompanyBudget.Core.Entities
 @using MonthlyCompanyBudget.Core.Enums
 @using MonthlyCompanyBudget.Data
+@using MonthlyCompanyBudget.Shared
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
 <MudToolBar>
-    <MudText Typo="Typo.h6">Monthly Income</MudText>
+    <MudText Typo="Typo.h6">Monthly @_category.Value.GetDescription()</MudText>
     <MudSpacer></MudSpacer>
     <MudSpacer></MudSpacer>
     <MudSpacer></MudSpacer>
