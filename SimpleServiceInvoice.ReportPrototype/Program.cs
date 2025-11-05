@@ -41,7 +41,7 @@ namespace SimpleServiceInvoice.ReportPrototype
                                 text.Line(invoice.Provider.Address).FontColor(Colors.Black).FontSize(16);
                                 text.Line($"Phone: {invoice.Provider.Phone}").FontColor(Colors.Black).FontSize(16);
                             });
-                            row.RelativeItem(3).Text("INVOICE").FontColor(Colors.Blue.Darken4).FontSize(30).AlignRight();
+                            row.RelativeItem(3).Text("INVOICE TITLE").FontColor(Colors.Blue.Darken4).FontSize(30).AlignRight();
                         });
                         
                         column.Item().Row(row =>
