@@ -1,0 +1,132 @@
+﻿@page "/timesheets"
+@using WeeklyTimesheet.ViewModels
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Time Sheets</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Add Timesheet">
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="AddTimesheet"/>
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
+<MudGrid>
+    <MudItem md="4" lg="4">
+        <MudAutocomplete Label="Find Employee" @bind-Value="_employee" SearchFunc="FindEmployee" ToStringFunc="@(x => x?.Name ?? "")" Variant="Variant.Outlined"/>        
+    </MudItem>
+    <MudItem md="4" lg="4">
+        <MudDatePicker Label="Find by Week Start" @bind-Date="_dateFilter" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+    </MudItem>
+</MudGrid>
+<MudSimpleTable Bordered="true" Hover="true">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Manager</th>
+            <th>Week Start</th>
+            <th>Total Hours</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var timesheet in _timesheets)
+        {
+            <tr>
+                <td>@timesheet.Employee.Name</td>
+                <td>@timesheet.Employee.Manager?.Name</td>
+                <td><MudLink Href="#" Typo="Typo.body2">@timesheet.WeekStart.ToString("yyyy-MM-dd")</MudLink></td>
+                <td>@timesheet.TotalHours</td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+<MudDialog @bind-Visible="_showAddTimesheetModal" Options="@(new DialogOptions { MaxWidth = MaxWidth.Large })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add Time Sheet</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_timesheetForm">
+            <MudAutocomplete Label="Employee" @bind-Value="_employee" SearchFunc="FindEmployee" ToStringFunc="@(x => x?.Name ?? "")" />
+            <MudDatePicker Label="Week Start" @bind-Date="_dateFilter" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => _showAddTimesheetModal = false)" Class="px-10">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveTimesheet" Class="px-10">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    private List<Employee> _employees = new List<Employee>();
+    private List<Timesheet> _timesheets = new List<Timesheet>();
+    private string _selectedValue;
+    private DateTime? _dateFilter;
+    private bool _showAddTimesheetModal;
+    private Employee _employee = null;
+    private MudForm? _timesheetForm;
+
+    protected override void OnInitialized()
+    {
+        _employees = GetEmployees();
+        _timesheets = GetTimesheets();
+    }
+
+    private List<Employee> GetEmployees()
+    {
+        var result = new List<Employee>();
+        var manager = new Employee { Id = 1, Name = "John Doe" };
+        var manager2 = new Employee { Id = 2, Name = "Alpha Bravo" };
+
+        result.Add(manager);
+        result.Add(manager2);
+        result.Add(new Employee { Id = 3, Name = "Bravo Charlie", Manager = manager });
+        result.Add(new Employee { Id = 4, Name = "Charlie Delta", Manager = manager2 });
+        result.Add(new Employee { Id = 5, Name = "Delta Echo", Manager = manager });
+        result.Add(new Employee { Id = 6, Name = "Echo Foxtrot", Manager = manager });
+        result.Add(new Employee { Id = 7, Name = "Foxtrot Golf", Manager = manager2 });
+        result.Add(new Employee { Id = 8, Name = "Golf Hotel", Manager = manager });
+        result.Add(new Employee { Id = 9, Name = "Hotel India", Manager = manager2 });
+        result.Add(new Employee { Id = 10, Name = "India Julliett", Manager = manager });
+        result.Add(new Employee { Id = 11, Name = "Julliett Kilo", Manager = manager });
+        result.Add(new Employee { Id = 12, Name = "Kilo Lima", Manager = manager2 });
+        result.Add(new Employee { Id = 13, Name = "Lima Mike", Manager = manager2 });
+        result.Add(new Employee { Id = 14, Name = "Mike November", Manager = manager });
+        result.Add(new Employee { Id = 15, Name = "November Oscar", Manager = manager });
+
+        return result;         
+    }
+
+    private List<Timesheet> GetTimesheets()
+    {
+        var result = new List<Timesheet>();
+        var weekStart = new DateTime(2025, 11, 26);
+        var random = new Random();
+
+        for (int i = 0; i < _employees.Count; i++)
+        {
+            result.Add(new Timesheet { Id = i + 1, Employee = _employees[i], WeekStart = weekStart, TotalHours = random.Next(50, 100) });
+        }
+
+        return result;
+    }
+
+    private void AddTimesheet()
+    {
+        _showAddTimesheetModal = true;
+    }
+
+    private void SaveTimesheet()
+    {
+        
+    }
+
+    private async Task<IEnumerable<Employee>> FindEmployee(string value, CancellationToken token)
+    {
+        var result = _employees;
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return result;
+        }
+
+        return result.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+}
