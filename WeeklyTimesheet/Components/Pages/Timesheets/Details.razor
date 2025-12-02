@@ -1,0 +1,201 @@
+﻿@page "/timesheets/{id:int}"
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Time Sheet Details</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Save">
+            <MudIconButton Icon="@Icons.Material.Outlined.Save" />
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
+<MudGrid Class="pa-4">
+    <MudItem sm="3" md="3" lg="3"><MudText><b>Employee</b><MudText Class="pl-4" Inline="true">John Doe</MudText></MudText></MudItem>
+    <MudItem sm="3" md="3" lg="3"><MudText><b>Manager</b><MudText Class="pl-4" Inline="true">Bravo Charlie</MudText></MudText></MudItem>
+    <MudItem sm="3" md="3" lg="3"><MudText><b>Week Start</b><MudText Class="pl-4" Inline="true">2025-11-27</MudText></MudText></MudItem>
+</MudGrid>
+<MudGrid Spacing="0">
+    <MudItem sm="12" md="12" lg="12" xl="12">
+        <MudGrid Spacing="0" Class="mud-theme-primary">
+            <MudItem md="1" Class="border border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Date</MudText></MudItem>
+            <MudItem md="2" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Time In</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Breaks<br/>(minutes)</MudText></MudItem>
+            <MudItem md="2" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Time Out</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Total<br/>h:mm</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Regular<br/>h:mm</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Overtime<br/>h:mm</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Sick<br/>h:mm</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Holiday<br/>h:mm</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center"><MudText Align="Align.Center" Typo="Typo.subtitle2">Vacation<br/>h:mm</MudText></MudItem>
+        </MudGrid>
+    </MudItem>
+    @for (int i = 0; i < _sample.Count; i++)
+    {
+        var timelog = _sample[i];
+        <MudItem sm="12" md="12" lg="12" xl="12">
+            <MudGrid Spacing="0">
+                <!--Date-->
+                <MudItem md="1" Class="@(SetBorder(i, 0) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">@timelog.ToString("yyyy-MM-dd")</MudText></MudItem>
+                <!--Time In-->
+                <MudItem md="2" Class="@(SetBorder(i, 1) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudTimePicker AmPm="true" Class="no-underline"/>
+                </MudItem>
+                <!--Breaks-->
+                <MudItem md="1" Class="@(SetBorder(i, 2) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudNumericField Variant="Variant.Text" Min="0" Max="60" Class="no-underline"/>
+                </MudItem>
+                <!--Time Out-->
+                <MudItem md="2" Class="@(SetBorder(i, 3) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudTimePicker AmPm="true" Class="no-underline" />
+                </MudItem>
+                <!--Total-->
+                <MudItem md="1" Class="@(SetBorder(i, 4) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">&nbsp;</MudText></MudItem>
+                <!--Regular-->
+                <MudItem md="1" Class="@(SetBorder(i, 5) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudTooltip>
+                        <ChildContent>
+                            <MudTextField T="string" Mask="@(new PatternMask("0:00"))" Variant="@Variant.Text" Validation="ValidateTime" Class="hide-error no-underline" OnlyValidateIfDirty="true"/>
+                        </ChildContent>
+                        <TooltipContent>
+                            <MudText Typo="Typo.body2" Align="Align.Justify">Enter hours and minutes using<br/> the format H:MM such as <br/>8:30 for 8 hours and 30 minutes,<br/> or 0:15 for 15 minutes.</MudText>
+                        </TooltipContent>
+                    </MudTooltip>
+                </MudItem>
+                <!--Overtime-->
+                <MudItem md="1" Class="@(SetBorder(i, 6) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudTooltip>
+                        <ChildContent>
+                            <MudTextField T="string" Mask="@(new PatternMask("0:00"))" Variant="@Variant.Text" Validation="ValidateTime" Class="hide-error no-underline" OnlyValidateIfDirty="true" />
+                        </ChildContent>
+                        <TooltipContent>
+                            <MudText Typo="Typo.body2" Align="Align.Justify">Enter hours and minutes using<br /> the format H:MM such as <br />8:30 for 8 hours and 30 minutes,<br /> or 0:15 for 15 minutes.</MudText>
+                        </TooltipContent>
+                    </MudTooltip>
+                </MudItem>
+                <!--Sick-->
+                <MudItem md="1" Class="@(SetBorder(i, 7) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudTooltip>
+                        <ChildContent>
+                            <MudTextField T="string" Mask="@(new PatternMask("0:00"))" Variant="@Variant.Text" Validation="ValidateTime" Class="hide-error no-underline" OnlyValidateIfDirty="true" />
+                        </ChildContent>
+                        <TooltipContent>
+                            <MudText Typo="Typo.body2" Align="Align.Justify">Enter hours and minutes using<br /> the format H:MM such as <br />8:30 for 8 hours and 30 minutes,<br /> or 0:15 for 15 minutes.</MudText>
+                        </TooltipContent>
+                    </MudTooltip>
+                </MudItem>
+                <!--Holiday-->
+                <MudItem md="1" Class="@(SetBorder(i, 8) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudTooltip>
+                        <ChildContent>
+                            <MudTextField T="string" Mask="@(new PatternMask("0:00"))" Variant="@Variant.Text" Validation="ValidateTime" Class="hide-error no-underline" OnlyValidateIfDirty="true" />
+                        </ChildContent>
+                        <TooltipContent>
+                            <MudText Typo="Typo.body2" Align="Align.Justify">Enter hours and minutes using<br /> the format H:MM such as <br />8:30 for 8 hours and 30 minutes,<br /> or 0:15 for 15 minutes.</MudText>
+                        </TooltipContent>
+                    </MudTooltip>
+                </MudItem>
+                <!--Vacation-->
+                <MudItem md="1" Class="@(SetBorder(i, 9) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
+                    <MudTooltip>
+                        <ChildContent>
+                            <MudTextField T="string" Mask="@(new PatternMask("0:00"))" Variant="@Variant.Text" Validation="ValidateTime" Class="hide-error no-underline" OnlyValidateIfDirty="true" />
+                        </ChildContent>
+                        <TooltipContent>
+                            <MudText Typo="Typo.body2" Align="Align.Justify">Enter hours and minutes using<br /> the format H:MM such as <br />8:30 for 8 hours and 30 minutes,<br /> or 0:15 for 15 minutes.</MudText>
+                        </TooltipContent>
+                    </MudTooltip>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    }
+    <MudItem sm="12" md="12" lg="12" xl="12">
+        <MudGrid Spacing="0">
+            <MudItem md="6" Class="pa-1 align-content-center"><MudText Align="Align.Center">&nbsp;</MudText></MudItem>
+            <MudItem md="1" Class="border border-solid pa-1 align-content-center mud-theme-primary" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">&nbsp;</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center mud-theme-primary" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center" Typo="Typo.subtitle2">Regular</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center mud-theme-primary" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center" Typo="Typo.subtitle2">Overtime</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center mud-theme-primary" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center" Typo="Typo.subtitle2">Sick</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center mud-theme-primary" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center" Typo="Typo.subtitle2">Holiday</MudText></MudItem>
+            <MudItem md="1" Class="border-y border-r border-solid pa-1 align-content-center mud-theme-primary" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center" Typo="Typo.subtitle2">Vacation</MudText></MudItem>
+        </MudGrid>
+        <MudGrid Spacing="0">
+            <MudItem md="6" Class="pa-1 align-content-center"><MudText Align="Align.Center">&nbsp;</MudText></MudItem>
+            <MudItem md="1" Class="border-x border-b border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center" Typo="Typo.subtitle2">Rate/hr:</MudText></MudItem>
+            <MudItem md="1" Class="border-r border-b border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-r border-b border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-r border-b border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-r border-b border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-r border-b border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+        </MudGrid>
+        <MudGrid Spacing="0">
+            <MudItem md="6" Class="pa-1 align-content-center"><MudText Align="Align.Center">&nbsp;</MudText></MudItem>
+            <MudItem md="1" Class="border-x border-b border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center" Typo="Typo.subtitle2">Total pay:</MudText></MudItem>
+            <MudItem md="1" Class="border-b border-r border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-b border-r border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-b border-r border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-b border-r border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="1" Class="border-b border-r border-solid pa-1 align-content-center" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">0.00</MudText></MudItem>
+            <MudItem md="6" lg="6" xl="6"><MudText>&nbsp;</MudText></MudItem>
+            <MudItem md="3" lg="3" xl="3" Class="border-y border-l border-solid pa-1" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Left"><b>Grand total pay:</b></MudText></MudItem>
+            <MudItem md="3" lg="3" xl="3" Class="border-y border-r border-solid pa-1" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Right"><b>0.00</b></MudText></MudItem>
+        </MudGrid>
+    </MudItem>
+</MudGrid>
+<style>
+.mud-input-control.hide-error div.me-auto{
+    display: none;
+}
+.no-underline .mud-input.mud-input-text.mud-input-underline:before {
+    border-bottom: none;
+}
+</style>
+
+@code {
+    private List<DateTime> _sample = new List<DateTime>();
+    public IMask mask1 = new RegexMask(@"^[0-9]+$");
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var dateNow = DateTime.Now;
+        for (int i = 0; i < 14; i++)
+        {
+            _sample.Add(dateNow.AddDays(i + 1));
+        }
+    }
+
+    private string SetBorder(int row, int column)
+    {
+        if (row == 0 && column == 0)//top left
+            return "border";
+        else if (row > 0 && column == 0)
+            return "border-l border-b border-r";
+        else if (row == 0 && column > 0)
+            return "border-b border-r border-t";
+        else
+            return "border-b border-r";
+    }
+
+    private bool ValidateTime(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;// "Time is required.";
+
+        // Regex: h:mm where h = any digits, mm = 00–59
+        var regex = new System.Text.RegularExpressions.Regex(@"^[0-9]+:[0-5][0-9]$");
+        if (!regex.IsMatch(value))
+            return false;// "Invalid format. Use h:mm (e.g., 1:05, 12:30).";
+
+        // Optional stricter check: ensure minutes are valid
+        var parts = value.Split(':');
+        if (int.TryParse(parts[1], out int minutes))
+        {
+            if (minutes < 0 || minutes > 59)
+                return false;// "Minutes must be between 00 and 59.";
+        }
+
+        return true;//null; // valid
+    }
+}
