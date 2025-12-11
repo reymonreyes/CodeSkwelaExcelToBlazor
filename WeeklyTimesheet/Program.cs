@@ -1,5 +1,7 @@
 using MudBlazor.Services;
 using WeeklyTimesheet.Components;
+using WeeklyTimesheet.Core.Repositories;
+using WeeklyTimesheet.Infrastructure;
 
 namespace WeeklyTimesheet
 {
@@ -15,6 +17,8 @@ namespace WeeklyTimesheet
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+
+            builder.Services.AddTransient<IEmployeesRepository, EmployeesRepository>();
 
             var app = builder.Build();
 

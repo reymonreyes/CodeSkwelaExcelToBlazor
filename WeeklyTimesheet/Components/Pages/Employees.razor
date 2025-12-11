@@ -1,7 +1,9 @@
 ﻿@page "/employees"
+@using WeeklyTimesheet.Core.Repositories
 @using WeeklyTimesheet.Shared
 @using WeeklyTimesheet.ViewModels
-
+@inject IEmployeesRepository EmployeesRepository
+    
 <MudPaper Class="my-2">
     <MudToolBar>
         <MudText Typo="Typo.h6">Employees</MudText>
@@ -13,12 +15,10 @@
 </MudPaper>
 <MudGrid>
     <MudItem md="4" lg="4">
-        <MudSelect T="string" Label="Find Employee" Variant="Variant.Outlined" @bind-Value="_selectedValue">
-            @foreach (var employee in _employees)
-            {
-            <MudSelectItem Value="@employee.Name">@employee.Name</MudSelectItem>                
-            }            
-        </MudSelect>
+        <MudTextField Label="Find Employee" @bind-Value="_employeeFilter" Variant="Variant.Outlined" DebounceInterval="500" OnDebounceIntervalElapsed="@((value) => FindEmployeesFilter(value))"></MudTextField>        
+    </MudItem>
+    <MudItem md="8" lg="8" Class="d-flex justify-end align-center">
+        <MudPagination Count="_totalPages" Selected="_page" SelectedChanged="PageChanged"/>
     </MudItem>
 </MudGrid>
 <MudSimpleTable Bordered="true" Hover="true">
@@ -51,7 +51,7 @@
     <DialogContent>
         <MudForm @ref="_employeeForm">
             <MudTextField @bind-Value="_employee.Name" Label="Name" Required="true"/>
-            <MudAutocomplete Label="Manager" @bind-Value="_employee.Manager" SearchFunc="FindManager" ToStringFunc="@(x => x?.Name ?? "")"/>
+            <MudAutocomplete Label="Manager" @bind-Value="_employee.Manager" SearchFunc="FindEmployeesForAutocomplete" ToStringFunc="@(x => x?.Name ?? "")"/>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -68,27 +68,12 @@
     private Employee _employee = null;
     private Employee _selectedManager;
     private MudForm? _employeeForm;
+    private string _employeeFilter = string.Empty;
+    private int _page = 1, _size = 10, _totalPages = 0;
 
     protected override void OnInitialized()
     {
-        var manager = new Employee { Id = 1, Name = "John Doe" };
-        var manager2 = new Employee { Id = 2, Name = "Alpha Bravo" };
-
-        _employees.Add(manager);
-        _employees.Add(manager2);
-        _employees.Add(new Employee { Id = 3, Name = "Bravo Charlie", Manager = manager });
-        _employees.Add(new Employee { Id = 4, Name = "Charlie Delta", Manager = manager2 });
-        _employees.Add(new Employee { Id = 5, Name = "Delta Echo", Manager = manager });
-        _employees.Add(new Employee { Id = 6, Name = "Echo Foxtrot", Manager = manager });
-        _employees.Add(new Employee { Id = 7, Name = "Foxtrot Golf", Manager = manager2 });
-        _employees.Add(new Employee { Id = 8, Name = "Golf Hotel", Manager = manager });
-        _employees.Add(new Employee { Id = 9, Name = "Hotel India", Manager = manager2 });
-        _employees.Add(new Employee { Id = 10, Name = "India Julliett", Manager = manager });
-        _employees.Add(new Employee { Id = 11, Name = "Julliett Kilo", Manager = manager });
-        _employees.Add(new Employee { Id = 12, Name = "Kilo Lima", Manager = manager2 });
-        _employees.Add(new Employee { Id = 13, Name = "Lima Mike", Manager = manager2 });
-        _employees.Add(new Employee { Id = 14, Name = "Mike November", Manager = manager });
-        _employees.Add(new Employee { Id = 15, Name = "November Oscar", Manager = manager });
+        _employees = FindEmployees("");
     }
 
     private void AddNewEmployee()
@@ -111,21 +96,51 @@
         if (!_employeeForm.IsValid)
             return;
 
-        _employees.Add(_employee);
+        if (_employeeFormMode == FormMode.Create)
+        {
+            EmployeesRepository.Create(new Core.Entities.Employee { Name = _employee.Name, ManagerId = _employee.Manager?.Id });            
+        }
+        else if(_employeeFormMode == FormMode.Edit)
+        {
+            var employee = new Core.Entities.Employee { Id = _employee.Id, Name = _employee.Name, ManagerId = _employee.Manager?.Id };
+            EmployeesRepository.Update(employee);
+        }            
 
         _showEmployeeFormModal = false;
         _employeeFormMode = FormMode.ReadOnly;
+        _employees = FindEmployees(_employeeFilter, _page, _size);
     }
 
-    private async Task<IEnumerable<Employee>> FindManager(string value, CancellationToken token)
+    private void FindEmployeesFilter(string name)
     {
-        var result = _employees.ToList();
+        _page = 1;
+        _employees = FindEmployees(name, _page, _size);
+    }
 
-        if (string.IsNullOrEmpty(value))
-        {
-            return result;
-        }
+    private Task<IEnumerable<Employee>> FindEmployeesForAutocomplete(string name, CancellationToken token)
+    {
+        var result = new List<Employee>();
 
-        return result.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        result = FindEmployees(name);
+
+        return Task.FromResult<IEnumerable<Employee>>(result);
+    }
+
+    private List<Employee> FindEmployees(string employeeName, int page = 1, int size = 10)
+    {
+        var employees = EmployeesRepository.FindByName(employeeName, page, size);
+        var result = new List<Employee>();
+
+        foreach (var employee in employees.Data)
+            result.Add(new Employee { Id = employee.Id, Name = employee.Name, Manager = (employee.Manager != null ? new Employee { Id = employee.Manager.Id, Name = employee.Manager.Name } : null) });
+
+        _totalPages = (int)Math.Ceiling(employees.TotalRecords / (decimal)_size);
+        return result;
+    }
+
+    private void PageChanged(int page)
+    {
+        _page = page;
+        _employees = FindEmployees(_employeeFilter, _page, _size);
     }
 }
