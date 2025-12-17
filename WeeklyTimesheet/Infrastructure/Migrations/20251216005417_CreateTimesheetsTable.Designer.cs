@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WeeklyTimesheet.Infrastructure;
 
@@ -10,9 +11,11 @@ using WeeklyTimesheet.Infrastructure;
 namespace WeeklyTimesheet.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251216005417_CreateTimesheetsTable")]
+    partial class CreateTimesheetsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -56,46 +59,6 @@ namespace WeeklyTimesheet.Infrastructure.Migrations
                     b.ToTable("Timesheets");
                 });
 
-            modelBuilder.Entity("WeeklyTimesheet.Core.Entities.TimesheetLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("BreakMinutes")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("DayOfWeek")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("HolidayMinutes")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("OvertimeMinutes")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SickMinutes")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("TimeIn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("TimeOut")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("TimesheetId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("VacationMinutes")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TimesheetId");
-
-                    b.ToTable("TimesheetLogs");
-                });
-
             modelBuilder.Entity("WeeklyTimesheet.Core.Entities.Employee", b =>
                 {
                     b.HasOne("WeeklyTimesheet.Core.Entities.Employee", "Manager")
@@ -114,20 +77,6 @@ namespace WeeklyTimesheet.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("WeeklyTimesheet.Core.Entities.TimesheetLog", b =>
-                {
-                    b.HasOne("WeeklyTimesheet.Core.Entities.Timesheet", null)
-                        .WithMany("Logs")
-                        .HasForeignKey("TimesheetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("WeeklyTimesheet.Core.Entities.Timesheet", b =>
-                {
-                    b.Navigation("Logs");
                 });
 #pragma warning restore 612, 618
         }

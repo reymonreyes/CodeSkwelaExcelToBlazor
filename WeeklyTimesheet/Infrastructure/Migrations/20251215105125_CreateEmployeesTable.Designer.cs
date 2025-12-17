@@ -10,8 +10,8 @@ using WeeklyTimesheet.Infrastructure;
 namespace WeeklyTimesheet.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251203125744_CreateEmployeeTable")]
-    partial class CreateEmployeeTable
+    [Migration("20251215105125_CreateEmployeesTable")]
+    partial class CreateEmployeesTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

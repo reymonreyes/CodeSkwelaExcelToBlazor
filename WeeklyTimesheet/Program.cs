@@ -19,6 +19,7 @@ namespace WeeklyTimesheet
                 .AddInteractiveServerComponents();
 
             builder.Services.AddTransient<IEmployeesRepository, EmployeesRepository>();
+            builder.Services.AddTransient<ITimesheetsRepository, TimesheetsRepository>();
 
             var app = builder.Build();
 

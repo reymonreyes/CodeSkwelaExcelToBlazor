@@ -41,7 +41,13 @@ namespace WeeklyTimesheet.Infrastructure
 
         public Employee Get(int id)
         {
-            throw new NotImplementedException();
+            Employee result = null;
+            using (var context = new ApplicationDbContext())
+            {
+                result = context.Employees.Find(id);
+            }
+
+            return result;
         }
 
         public IEnumerable<Employee> GetAll(int page = 1, int size = 10)

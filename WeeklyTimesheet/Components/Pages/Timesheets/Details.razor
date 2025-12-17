@@ -34,7 +34,7 @@
         var timelog = _sample[i];
         <MudItem sm="12" md="12" lg="12" xl="12">
             <MudGrid Spacing="0">
-                <!--Date-->
+                <!--Day of week-->
                 <MudItem md="1" Class="@(SetBorder(i, 0) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")"><MudText Align="Align.Center">@timelog.ToString("yyyy-MM-dd")</MudText></MudItem>
                 <!--Time In-->
                 <MudItem md="2" Class="@(SetBorder(i, 1) + " border-solid pa-1 align-content-center")" Style="@($"border-color: {Colors.Gray.Lighten3};")">
