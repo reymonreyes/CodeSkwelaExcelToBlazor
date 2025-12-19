@@ -22,6 +22,18 @@ namespace WeeklyTimesheet.Infrastructure
             return timesheet.Id;
         }
 
+        public Timesheet Get(int id)
+        {
+            Timesheet result = null;
+
+            using (var context = new ApplicationDbContext())
+            {
+                result = context.Timesheets.Include(x => x.Employee).ThenInclude(x => x.Manager).Include(x => x.Logs).FirstOrDefault(x => x.Id == id);
+            }
+
+            return result;
+        }
+
         public Timesheet GetByEmployeeAndStartDate(int employeeId, DateTime startDate)
         {
             Timesheet result = null;
@@ -131,6 +143,15 @@ namespace WeeklyTimesheet.Infrastructure
             }
 
             return result;
+        }
+
+        public void Update(Timesheet timesheet)
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                context.Update(timesheet);
+                context.SaveChanges();
+            }
         }
     }
 }

@@ -41,7 +41,7 @@
             <tr>
                 <td>@timesheet.Employee.Name</td>
                 <td>@timesheet.Employee.Manager?.Name</td>
-                <td><MudLink Href="timesheets/1" Typo="Typo.body2">@timesheet.WeekStart.ToString("yyyy-MM-dd")</MudLink></td>
+                <td><MudLink Href="@($"timesheets/{timesheet.Id}")" Typo="Typo.body2">@timesheet.WeekStart.ToString("yyyy-MM-dd")</MudLink></td>
                 <td>@timesheet.TotalHours</td>
             </tr>
         }
@@ -118,7 +118,7 @@
 
         CloseCreateTimesheet();
         //should navigate to timesheet details
-        
+
     }
 
     private async Task<IEnumerable<Employee>> FindEmployee(string value, CancellationToken token)
@@ -185,7 +185,7 @@
 
         foreach (var timesheet in timesheets.Data)
         {
-            _timesheets.Add(new Timesheet { Id = timesheet.Id, Employee = new Employee { Id = timesheet.Id, Name = timesheet.Employee.Name }, WeekStart = timesheet.StartDate.ToLocalTime(), TotalHours = 0 });
+            _timesheets.Add(new Timesheet { Id = timesheet.Id, Employee = new Employee { Id = timesheet.Id, Name = timesheet.Employee.Name, Manager = new Employee { Name = timesheet.Employee?.Manager?.Name } }, WeekStart = timesheet.StartDate.ToLocalTime(), TotalHours = 0 });
         }
 
         _totalPages = (int)Math.Ceiling(timesheets.TotalRecords / (decimal)_size);
