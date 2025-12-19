@@ -1,0 +1,193 @@
+﻿@page "/timesheets"
+@using WeeklyTimesheet.Core.Repositories
+@using WeeklyTimesheet.UseCases
+@using WeeklyTimesheet.ViewModels
+@inject IEmployeesRepository EmployeesRepository
+@inject ITimesheetsRepository TimesheetsRepository
+@inject ISnackbar Snackbar
+
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Time Sheets</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Add Timesheet">
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="AddTimesheet"/>
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
+<MudGrid>
+    <MudItem md="4" lg="4">
+        <MudAutocomplete Label="Find Employee" T="Employee" SearchFunc="FindEmployeesForAutocomplete" ValueChanged="FilterTimesheetsByEmployee" ToStringFunc="@(x => x?.Name ?? "")" Clearable="true" Variant="Variant.Outlined"/>        
+    </MudItem>
+    <MudItem md="4" lg="4">
+        <MudDatePicker Label="Find by Week Start" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" DateChanged="FilterTimesheetsByStartDate" Clearable="true" />
+    </MudItem>
+    <MudItem md="4" lg="4" Class="d-flex justify-end align-center">
+        <MudPagination Count="_totalPages" Selected="_page" SelectedChanged="PageChanged" />
+    </MudItem>
+</MudGrid>
+<MudSimpleTable Bordered="true" Hover="true">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Manager</th>
+            <th>Week Start</th>
+            <th>Total Hours</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var timesheet in _timesheets)
+        {
+            <tr>
+                <td>@timesheet.Employee.Name</td>
+                <td>@timesheet.Employee.Manager?.Name</td>
+                <td><MudLink Href="@($"timesheets/{timesheet.Id}")" Typo="Typo.body2">@timesheet.WeekStart.ToString("yyyy-MM-dd")</MudLink></td>
+                <td>@timesheet.TotalHours</td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+<MudDialog @bind-Visible="_showAddTimesheetModal" Options="@(new DialogOptions { MaxWidth = MaxWidth.Large })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add Time Sheet</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_timesheetForm">
+            <MudAutocomplete Label="Employee" @bind-Value="_createTimesheetEmployee" SearchFunc="FindEmployee" ToStringFunc="@(x => x?.Name ?? "")" Required/>
+            <MudDatePicker Label="Week Start" @bind-Date="_createTimesheetStartDate" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" Required/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="CloseCreateTimesheet" Class="px-10">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveTimesheet" Class="px-10">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    private List<Employee> _employees = new List<Employee>();
+    private List<Timesheet> _timesheets = new List<Timesheet>();
+    private DateTime? _dateFilter, _createTimesheetStartDate;
+    private bool _showAddTimesheetModal;
+    private Employee _employeeFilter = null, _createTimesheetEmployee = null;
+    private MudForm? _timesheetForm;
+    private int _page = 1, _size = 10, _totalPages = 0;
+
+    protected override void OnInitialized()
+    {
+        _employees = FindEmployees("");
+        FilterTimesheetsByEmployeeIdAndStartDate(null, null);
+    }
+
+    private List<Employee> FindEmployees(string employeeName, int page = 1, int size = 10)
+    {
+        var employees = EmployeesRepository.FindByName(employeeName, page, size);
+        var result = new List<Employee>();
+
+        foreach (var employee in employees.Data)
+            result.Add(new Employee { Id = employee.Id, Name = employee.Name, Manager = (employee.Manager != null ? new Employee { Id = employee.Manager.Id, Name = employee.Manager.Name } : null) });
+
+        _totalPages = (int)Math.Ceiling(employees.TotalRecords / (decimal)_size);
+        return result;
+    }
+
+    private void AddTimesheet()
+    {
+        _showAddTimesheetModal = true;
+    }
+
+    private async Task SaveTimesheet()
+    {
+        await _timesheetForm.Validate();
+        if (!_timesheetForm.IsValid)
+            return;
+
+        var createTimesheet = new CreateTimesheet(EmployeesRepository, TimesheetsRepository);
+        var result = createTimesheet.Save(_createTimesheetEmployee.Id, _createTimesheetStartDate.Value);
+
+        if (result.Errors.Count > 0)
+        {
+            var errorsString = "<ul>";
+            foreach (var error in result.Errors)
+            {
+                errorsString += "<li>" + error + "</li>";
+            }
+            errorsString += "</ul>";
+
+            Snackbar.Add(new MarkupString(errorsString), Severity.Error);
+            return;
+        }
+
+        CloseCreateTimesheet();
+        //should navigate to timesheet details
+
+    }
+
+    private async Task<IEnumerable<Employee>> FindEmployee(string value, CancellationToken token)
+    {
+        var result = _employees;
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return result;
+        }
+
+        return result.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private void CloseCreateTimesheet()
+    {
+        ResetCreateTimesheetModalData();
+        _showAddTimesheetModal = false;
+    }
+
+    private void ResetCreateTimesheetModalData()
+    {
+        _createTimesheetEmployee = null;
+        _createTimesheetStartDate = null;
+    }
+
+    private void PageChanged(int page)
+    {
+        _page = page;
+        FilterTimesheetsByEmployeeIdAndStartDate(_employeeFilter, _dateFilter);
+    }
+
+    private Task<IEnumerable<Employee>> FindEmployeesForAutocomplete(string name, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Task.FromResult<IEnumerable<Employee>>(_employees);
+
+        var result = new List<Employee>();
+
+        result = FindEmployees(name);
+
+        return Task.FromResult<IEnumerable<Employee>>(result);
+    }
+
+    private void FilterTimesheetsByEmployee(Employee employee)
+    {
+        _employeeFilter = employee;
+        FilterTimesheetsByEmployeeIdAndStartDate(_employeeFilter, _dateFilter);        
+    }
+
+    private void FilterTimesheetsByStartDate(DateTime? startDate)
+    {
+        _dateFilter = startDate;
+        FilterTimesheetsByEmployeeIdAndStartDate(_employeeFilter, _dateFilter);        
+    }
+
+    private void FilterTimesheetsByEmployeeIdAndStartDate(Employee employee, DateTime? startDate)
+    {
+        _employeeFilter = employee;
+        _dateFilter = startDate;
+
+        var timesheets = TimesheetsRepository.GetAllByEmployeeIdAndStartDate(_employeeFilter?.Id, _dateFilter?.ToUniversalTime(), _page, _size);
+        _timesheets = new List<Timesheet>();
+
+        foreach (var timesheet in timesheets.Data)
+        {
+            _timesheets.Add(new Timesheet { Id = timesheet.Id, Employee = new Employee { Id = timesheet.Id, Name = timesheet.Employee.Name, Manager = new Employee { Name = timesheet.Employee?.Manager?.Name } }, WeekStart = timesheet.StartDate.ToLocalTime(), TotalHours = 0 });
+        }
+
+        _totalPages = (int)Math.Ceiling(timesheets.TotalRecords / (decimal)_size);
+    }
+}

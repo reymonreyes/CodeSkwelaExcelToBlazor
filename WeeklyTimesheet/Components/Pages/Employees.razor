@@ -1,0 +1,146 @@
+﻿@page "/employees"
+@using WeeklyTimesheet.Core.Repositories
+@using WeeklyTimesheet.Shared
+@using WeeklyTimesheet.ViewModels
+@inject IEmployeesRepository EmployeesRepository
+    
+<MudPaper Class="my-2">
+    <MudToolBar>
+        <MudText Typo="Typo.h6">Employees</MudText>
+        <MudSpacer></MudSpacer>
+        <MudTooltip Text="Add New Employee">
+            <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="AddNewEmployee"/>
+        </MudTooltip>
+    </MudToolBar>
+</MudPaper>
+<MudGrid>
+    <MudItem md="4" lg="4">
+        <MudTextField Label="Find Employee" @bind-Value="_employeeFilter" Variant="Variant.Outlined" DebounceInterval="500" OnDebounceIntervalElapsed="@((value) => FindEmployeesFilter(value))"></MudTextField>        
+    </MudItem>
+    <MudItem md="8" lg="8" Class="d-flex justify-end align-center">
+        <MudPagination Count="_totalPages" Selected="_page" SelectedChanged="PageChanged"/>
+    </MudItem>
+</MudGrid>
+<MudSimpleTable Bordered="true" Hover="true">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Manager</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var employee in _employees)
+        {
+            <tr>
+                <td>@employee.Name</td>
+                <td>@employee?.Manager?.Name</td>
+                <td>
+                    <MudTooltip Text="Edit">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" Href="" OnClick="@(() => EditEmployee(employee))"></MudIconButton>
+                    </MudTooltip>
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+<MudDialog @bind-Visible="_showEmployeeFormModal" Options="@(new DialogOptions{ MaxWidth = MaxWidth.Large })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_employeeFormMode == FormMode.Create ? "Add New" : (_employeeFormMode == FormMode.Edit ? "Edit" : "")) Employee</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_employeeForm">
+            <MudTextField @bind-Value="_employee.Name" Label="Name" Required="true"/>
+            <MudAutocomplete Label="Manager" @bind-Value="_employee.Manager" SearchFunc="FindEmployeesForAutocomplete" ToStringFunc="@(x => x?.Name ?? "")"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => _showEmployeeFormModal = false)" Class="px-10">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveEmployee" Class="px-10">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Employee> _employees = new List<Employee>();
+    private string _selectedValue;
+    private bool _showEmployeeFormModal;
+    private FormMode _employeeFormMode = FormMode.ReadOnly;
+    private Employee _employee = null;
+    private Employee _selectedManager;
+    private MudForm? _employeeForm;
+    private string _employeeFilter = string.Empty;
+    private int _page = 1, _size = 10, _totalPages = 0;
+
+    protected override void OnInitialized()
+    {
+        _employees = FindEmployees("");
+    }
+
+    private void AddNewEmployee()
+    {
+        _showEmployeeFormModal = true;
+        _employeeFormMode = FormMode.Create;
+        _employee = new Employee();
+    }
+
+    private void EditEmployee(Employee employee)
+    {
+        _employee = employee;
+        _showEmployeeFormModal = true;
+        _employeeFormMode = FormMode.Edit;
+    }
+
+    private async Task SaveEmployee()
+    {
+        await _employeeForm.Validate();
+        if (!_employeeForm.IsValid)
+            return;
+
+        if (_employeeFormMode == FormMode.Create)
+        {
+            EmployeesRepository.Create(new Core.Entities.Employee { Name = _employee.Name, ManagerId = _employee.Manager?.Id });            
+        }
+        else if(_employeeFormMode == FormMode.Edit)
+        {
+            var employee = new Core.Entities.Employee { Id = _employee.Id, Name = _employee.Name, ManagerId = _employee.Manager?.Id };
+            EmployeesRepository.Update(employee);
+        }            
+
+        _showEmployeeFormModal = false;
+        _employeeFormMode = FormMode.ReadOnly;
+        _employees = FindEmployees(_employeeFilter, _page, _size);
+    }
+
+    private void FindEmployeesFilter(string name)
+    {
+        _page = 1;
+        _employees = FindEmployees(name, _page, _size);
+    }
+
+    private Task<IEnumerable<Employee>> FindEmployeesForAutocomplete(string name, CancellationToken token)
+    {
+        var result = new List<Employee>();
+
+        result = FindEmployees(name);
+
+        return Task.FromResult<IEnumerable<Employee>>(result);
+    }
+
+    private List<Employee> FindEmployees(string employeeName, int page = 1, int size = 10)
+    {
+        var employees = EmployeesRepository.FindByName(employeeName, page, size);
+        var result = new List<Employee>();
+
+        foreach (var employee in employees.Data)
+            result.Add(new Employee { Id = employee.Id, Name = employee.Name, Manager = (employee.Manager != null ? new Employee { Id = employee.Manager.Id, Name = employee.Manager.Name } : null) });
+
+        _totalPages = (int)Math.Ceiling(employees.TotalRecords / (decimal)_size);
+        return result;
+    }
+
+    private void PageChanged(int page)
+    {
+        _page = page;
+        _employees = FindEmployees(_employeeFilter, _page, _size);
+    }
+}
